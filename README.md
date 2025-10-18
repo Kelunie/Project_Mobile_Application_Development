@@ -1,6 +1,6 @@
 # ChessKel - Mobile Chess Application
 
-![ChessKel Logo](media/image1.jpeg)
+![ChessKel Logo](https://github.com/Kelunie/Desarrollo_de_Aplicaciones_para_Dispositivos_M-viles/blob/main/Semana_4/505c07b1-38f0-4a5f-bc38-ca62de98bafe.jpeg)
 
 ## Project Overview
 
