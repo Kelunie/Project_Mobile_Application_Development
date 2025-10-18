@@ -6,7 +6,7 @@
 
 **Course:** Mobile Application Development  
 **Project:** ChessKel  
-**Instructor:** Ing. Caleb Rodríguez
+**Student:** Ing. Caleb Rodríguez
 
 ### Brief Description
 A complete chess application for Android that allows users to create profiles, register their location, and play matches against a local AI or an opponent on the same LAN, managing all user and match information through CRUD operations with SQLite.
