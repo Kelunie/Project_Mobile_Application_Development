@@ -11,6 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ChessKel">
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -18,10 +19,28 @@
             android:theme="@style/Theme.ChessKel">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.chesskel.ui.auth.LoginActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChessKel" />
+
+        <activity
+            android:name="com.chesskel.ui.auth.RegisterActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChessKel" />
+
+        <activity
+            android:name="com.chesskel.ui.menu.MainMenuActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChessKel" />
+
     </application>
 
 </manifest>

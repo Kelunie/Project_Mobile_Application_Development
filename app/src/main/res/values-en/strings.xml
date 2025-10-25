@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ChessKel</string>
+    <string name="msgwelcome">Welcome</string>
+    <string name="usernamelabel">Username</string>
+    <string name="passwordlabel">Password</string>
+    <string name="createlabel">Create</string>
+    <string name="emaillabel">E-mail</string>
+    <string name="menulabel">Menu</string>
+    <string name="playervsia">Player vs IA</string>
+    <string name="playervsplayer">Player vs Player</string>
+    <string name="profilelabel">Profile</string>
+    <string name="loginlabel">Login</string>
+    <string name="creationlabel">Create Account</string>
+    <string name="haveAccount">Already have an account? Log in</string>
+</resources>

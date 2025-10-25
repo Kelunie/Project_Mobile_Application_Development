@@ -1,47 +1,30 @@
+// app/src/main/java/com/chesskel/MainActivity.kt
 package com.chesskel
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.chesskel.ui.theme.ChessKelTheme
+import com.chesskel.data.DBHelper
+import com.chesskel.ui.auth.LoginActivity
+import com.chesskel.ui.auth.RegisterActivity
+import com.chesskel.ui.menu.MainMenuActivity
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            ChessKelTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
-            }
+
+        val prefs = getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
+        val hasSession = prefs.getLong("current_user_id", -1L) > 0L
+        val db = DBHelper(this)
+        val hasAnyUser = db.readableDatabase
+            .rawQuery("SELECT 1 FROM usuarios LIMIT 1", null)
+            .use { it.moveToFirst() }
+
+        when {
+            hasSession -> startActivity(Intent(this, MainMenuActivity::class.java))
+            hasAnyUser -> startActivity(Intent(this, LoginActivity::class.java))
+            else -> startActivity(Intent(this, RegisterActivity::class.java))
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ChessKelTheme {
-        Greeting("Android")
+        finish()
     }
 }
