@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">ChessKel</string>
+    <string name="msgwelcome">Bienvenido</string>
+    <string name="usernamelabel">Nombre de Usuario</string>
+    <string name="passwordlabel">Contraseña</string>
+    <string name="createlabel">Crear</string>
+    <string name="emaillabel">Correo</string>
+    <string name="menulabel">Menu</string>
+    <string name="playervsia">Jugador vs IA</string>
+    <string name="playervsplayer">Jugador vs Jugador</string>
+    <string name="profilelabel">Perfil</string>
+    <string name="loginlabel">Ingresar</string>
+    <string name="creationlabel">Crear Cuenta</string>
+    <string name="haveAccount">¿Ya tienes una cuenta? Ingresar</string>
 </resources>
