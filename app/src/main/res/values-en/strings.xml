@@ -13,4 +13,9 @@
     <string name="loginlabel">Login</string>
     <string name="creationlabel">Create Account</string>
     <string name="haveAccount">Already have an account? Log in</string>
+    <string name="labelAiTittle">Select AI Difficulty</string>
+    <string name="AiModeEasy">Easy</string>
+    <string name="AiModeNormal">Normal</string>
+    <string name="AiModeHard">Hard</string>
+    <string name="AiModePro">Pro</string>
 </resources>

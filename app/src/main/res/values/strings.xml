@@ -12,4 +12,9 @@
     <string name="loginlabel">Ingresar</string>
     <string name="creationlabel">Crear Cuenta</string>
     <string name="haveAccount">¿Ya tienes una cuenta? Ingresar</string>
+    <string name="labelAiTittle">Seleccione la dificultad</string>
+    <string name="AiModeEasy">Facil</string>
+    <string name="AiModeNormal">Normal</string>
+    <string name="AiModeHard">Difícil</string>
+    <string name="AiModePro">Pro</string>
 </resources>
