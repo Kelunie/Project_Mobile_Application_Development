@@ -12,9 +12,12 @@
     <string name="loginlabel">Ingresar</string>
     <string name="creationlabel">Crear Cuenta</string>
     <string name="haveAccount">¿Ya tienes una cuenta? Ingresar</string>
-    <string name="labelAiTittle">Seleccione la dificultad</string>
-    <string name="AiModeEasy">Facil</string>
+    <string name="labelAiTitle">Seleccione la dificultad</string>
+    <string name="AiModeEasy">Fácil</string>
     <string name="AiModeNormal">Normal</string>
     <string name="AiModeHard">Difícil</string>
     <string name="AiModePro">Pro</string>
+    <string name="btnResgin">Rendirse</string>
+    <string name="black_to_move">Mueve las piezas negras</string>
+    <string name="white_to_move">Mueve las piezas blancas</string>
 </resources>

@@ -13,7 +13,7 @@
             android:id="@+id/tvDialogTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/labelAiTittle"
+            android:text="@string/labelAiTitle"
             android:textSize="18sp"
             android:textStyle="bold"
             android:paddingBottom="12dp" />
