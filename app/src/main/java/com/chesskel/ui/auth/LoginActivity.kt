@@ -38,6 +38,8 @@ class LoginActivity : ComponentActivity() {
                     val userId = c.getLong(0)
                     getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
                         .edit().putLong("current_user_id", userId).apply()
+                    // will apears a toeast "login successful" before main menu
+                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, MainMenuActivity::class.java))
                     finish()
                 } else {
