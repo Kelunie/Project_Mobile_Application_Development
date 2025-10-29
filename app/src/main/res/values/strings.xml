@@ -20,4 +20,5 @@
     <string name="btnResgin">Rendirse</string>
     <string name="black_to_move">Mueve las piezas negras</string>
     <string name="white_to_move">Mueve las piezas blancas</string>
+    <string name="not_your_piece">No es tu pieza</string>
 </resources>

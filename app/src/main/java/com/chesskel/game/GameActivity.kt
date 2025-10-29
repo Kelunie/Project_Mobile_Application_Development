@@ -70,6 +70,9 @@ class GameActivity : ComponentActivity(), GameEventListener {
             }
         }
 
+        // New: tell the board which side the human controls
+        chessBoard.humanIsWhite = !aiPlaysWhite
+
         aiMode?.let { mode ->
             aiBot = AiBot(engine, mode) { aiMove ->
                 runOnUiThread { performMove(aiMove) }
@@ -94,6 +97,15 @@ class GameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun onPlayerAttemptMove(m: Move) {
+        // New: guard against moving opponent pieces or playing out of turn
+        val humanIsWhite = !aiPlaysWhite
+        val mover = engine.pieceAt(m.fromR, m.fromC)
+        if (engine.whiteToMove != humanIsWhite || mover == '.' || mover.isUpperCase() != humanIsWhite) {
+            // Ignore or show a brief hint
+            Toast.makeText(this, getString(R.string.not_your_piece), Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (m.promotion != null) {
             showPromotionDialog(m)
         } else {
@@ -128,7 +140,6 @@ class GameActivity : ComponentActivity(), GameEventListener {
         engine.applyMove(m)
 
         // After applying the move, engine.whiteToMove indicates who is to move now (the opponent).
-        // Use that directly to check whether the side to move (the opponent) is in check/checkmate.
         val opponentIsWhite = engine.whiteToMove
 
         // Play appropriate sound

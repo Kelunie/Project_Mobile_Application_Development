@@ -21,4 +21,5 @@
     <string name="btnResgin">Resign</string>
     <string name="black_to_move">Black moves</string>
     <string name="white_to_move">White moves</string>
+    <string name="not_your_piece">It is not your piece</string>
 </resources>
