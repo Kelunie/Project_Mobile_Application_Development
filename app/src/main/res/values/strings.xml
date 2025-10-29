@@ -21,4 +21,7 @@
     <string name="black_to_move">Mueve las piezas negras</string>
     <string name="white_to_move">Mueve las piezas blancas</string>
     <string name="not_your_piece">No es tu pieza</string>
+    <string name="choose_side">Elige un lado</string>
+    <string name="play_as_white">Jugar como piezas blancas</string>
+    <string name="play_as_black">Jugar como piezas negras</string>
 </resources>

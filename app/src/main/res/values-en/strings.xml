@@ -22,4 +22,7 @@
     <string name="black_to_move">Black moves</string>
     <string name="white_to_move">White moves</string>
     <string name="not_your_piece">It is not your piece</string>
+    <string name="choose_side">Choose a side</string>
+    <string name="play_as_white">Play as white</string>
+    <string name="play_as_black">Play as black</string>
 </resources>
