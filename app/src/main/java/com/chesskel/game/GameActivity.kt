@@ -24,7 +24,8 @@ class GameActivity : ComponentActivity(), GameEventListener {
     private val engine = ChessEngine()
     private var aiBot: AiBot? = null
     private var aiMode: AiMode? = null
-    private var aiPlaysWhite = false // default: AI plays black
+    // If true, AI controls White; human controls Black. Otherwise human is White.
+    private var aiPlaysWhite = false
 
     private lateinit var chessBoard: ChessBoardView
     private lateinit var tvGameInfo: TextView
@@ -57,19 +58,28 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         chessBoard.bindEngine(engine)
 
-        intent?.let {
-            it.getStringExtra("ai_mode")?.let { modeName ->
-                try {
-                    aiMode = AiMode.valueOf(modeName)
-                } catch (_: IllegalArgumentException) {
-                    // ignore invalid mode
-                }
-            }
-            if (it.hasExtra("ai_plays_white")) {
-                aiPlaysWhite = it.getBooleanExtra("ai_plays_white", false)
+        // Read AI mode first
+        intent?.getStringExtra("ai_mode")?.let { modeName ->
+            try {
+                aiMode = AiMode.valueOf(modeName)
+            } catch (_: IllegalArgumentException) {
+                // ignore invalid mode
             }
         }
 
+        // Decide sides from Intent (prefer human_plays_white; fall back to ai_plays_white)
+        aiPlaysWhite = when {
+            intent?.hasExtra("human_plays_white") == true ->
+                !intent.getBooleanExtra("human_plays_white", true)
+            intent?.hasExtra("ai_plays_white") == true ->
+                intent.getBooleanExtra("ai_plays_white", false)
+            else -> false // default: AI plays Black (human plays White)
+        }
+
+        // Tell the board which side the human controls
+        chessBoard.humanIsWhite = !aiPlaysWhite
+
+        // Initialize AI bot if mode is set
         aiMode?.let { mode ->
             aiBot = AiBot(engine, mode) { aiMove ->
                 runOnUiThread { performMove(aiMove) }
@@ -94,6 +104,15 @@ class GameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun onPlayerAttemptMove(m: Move) {
+        // Guard against moving opponent pieces or playing out of turn
+        val humanIsWhite = !aiPlaysWhite
+        val mover = engine.pieceAt(m.fromR, m.fromC)
+        if (engine.whiteToMove != humanIsWhite || mover == '.' || mover.isUpperCase() != humanIsWhite) {
+            // Ignore or show a brief hint
+            Toast.makeText(this, getString(R.string.not_your_piece), Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (m.promotion != null) {
             showPromotionDialog(m)
         } else {
@@ -128,7 +147,6 @@ class GameActivity : ComponentActivity(), GameEventListener {
         engine.applyMove(m)
 
         // After applying the move, engine.whiteToMove indicates who is to move now (the opponent).
-        // Use that directly to check whether the side to move (the opponent) is in check/checkmate.
         val opponentIsWhite = engine.whiteToMove
 
         // Play appropriate sound

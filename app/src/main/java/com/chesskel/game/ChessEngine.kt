@@ -26,6 +26,48 @@ class ChessEngine {
         eventListener?.onGameEnd(result)
     }
 
+    // >>>>> ADD: lightweight snapshot/restore for AI search
+    data class Snapshot(
+        val boardCopy: Array<CharArray>,
+        val whiteToMove: Boolean,
+        val whiteKingMoved: Boolean,
+        val blackKingMoved: Boolean,
+        val whiteRookA_moved: Boolean,
+        val whiteRookH_moved: Boolean,
+        val blackRookA_moved: Boolean,
+        val blackRookH_moved: Boolean,
+        val enPassantTarget: Pair<Int,Int>?
+    )
+
+    fun snapshot(): Snapshot {
+        val boardCopy = Array(8) { r -> board[r].copyOf() }
+        return Snapshot(
+            boardCopy = boardCopy,
+            whiteToMove = whiteToMove,
+            whiteKingMoved = whiteKingMoved,
+            blackKingMoved = blackKingMoved,
+            whiteRookA_moved = whiteRookA_moved,
+            whiteRookH_moved = whiteRookH_moved,
+            blackRookA_moved = blackRookA_moved,
+            blackRookH_moved = blackRookH_moved,
+            enPassantTarget = enPassantTarget
+        )
+    }
+
+    fun restore(s: Snapshot) {
+        for (r in 0..7) {
+            board[r] = s.boardCopy[r].copyOf()
+        }
+        whiteToMove = s.whiteToMove
+        whiteKingMoved = s.whiteKingMoved
+        blackKingMoved = s.blackKingMoved
+        whiteRookA_moved = s.whiteRookA_moved
+        whiteRookH_moved = s.whiteRookH_moved
+        blackRookA_moved = s.blackRookA_moved
+        blackRookH_moved = s.blackRookH_moved
+        enPassantTarget = s.enPassantTarget
+    }
+    // <<<<< END ADD
 
     init { reset() }
 

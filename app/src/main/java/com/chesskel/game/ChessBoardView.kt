@@ -24,6 +24,9 @@ class ChessBoardView @JvmOverloads constructor(
     private var engine: ChessEngine? = null
     var onMove: ((Move) -> Unit)? = null
 
+    // New: which color the human controls (true = White, false = Black)
+    var humanIsWhite: Boolean = true
+
     private var selR = -1; private var selC = -1
     private var possibleMoves: List<Move> = emptyList()
 
@@ -159,6 +162,10 @@ class ChessBoardView @JvmOverloads constructor(
         val engine = engine ?: return false
         if (event.action != MotionEvent.ACTION_DOWN) return false
         if (squareSize == 0f) squareSize = width / 8f
+
+        // New: ignore input when it's not the human's turn
+        if (engine.whiteToMove != humanIsWhite) return false
+
         val c = (event.x / squareSize).toInt().coerceIn(0, 7)
         val r = (event.y / squareSize).toInt().coerceIn(0, 7)
         val piece = engine.pieceAt(r, c)
@@ -170,8 +177,8 @@ class ChessBoardView @JvmOverloads constructor(
             return true
         }
 
-        // select own piece (only when it is that side's turn) and show legal moves
-        if (piece != '.' && piece.isUpperCase() == engine.whiteToMove) {
+        // select human's piece only, and only on human's turn
+        if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
             selR = r; selC = c
             possibleMoves = engine.legalMovesFor(r, c)
 
