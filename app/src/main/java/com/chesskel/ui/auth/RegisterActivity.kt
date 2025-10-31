@@ -1,4 +1,3 @@
-// app/src/main/java/com/chesskel/ui/auth/RegisterActivity.kt
 package com.chesskel.ui.auth
 
 import android.content.Intent
