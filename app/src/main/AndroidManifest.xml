@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Needed for LAN sockets -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -40,8 +46,21 @@
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.ChessKel" />
+
         <activity
             android:name="com.chesskel.ui.game.GameActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChessKel" />
+
+        <!-- New PvP screens -->
+        <activity
+            android:name="com.chesskel.ui.pvp.PvpLobbyActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChessKel" />
+        <activity
+            android:name="com.chesskel.ui.pvp.PvpGameActivity"
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.ChessKel" />

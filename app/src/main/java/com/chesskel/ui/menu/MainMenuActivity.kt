@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.chesskel.R
 import com.chesskel.game.AiMode
+import com.chesskel.ui.pvp.PvpLobbyActivity
 
 class MainMenuActivity : ComponentActivity() {
 
@@ -22,8 +23,8 @@ class MainMenuActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnPvp).setOnClickListener {
-            // keep existing behavior or start PvP activity
-            Toast.makeText(this, "Player vs Player (TODO)", Toast.LENGTH_SHORT).show()
+            // Launch the new PvP lobby (LAN)
+            startActivity(Intent(this, PvpLobbyActivity::class.java))
         }
 
         findViewById<Button>(R.id.btnProfile).setOnClickListener {
@@ -41,35 +42,22 @@ class MainMenuActivity : ComponentActivity() {
         val modeHard = dialogView.findViewById<LinearLayout>(R.id.mode_hard)
         val modePro = dialogView.findViewById<LinearLayout>(R.id.mode_pro)
 
-        fun pickSideAndStart(mode: AiMode) {
-            // First close the mode dialog so we don’t stack dialogs
+        fun select(mode: AiMode) {
+            Toast.makeText(applicationContext, "${mode.label} selected", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, com.chesskel.ui.game.GameActivity::class.java).apply {
+                putExtra("ai_mode", mode.name)
+                putExtra("ai_min_elo", mode.minElo)
+                putExtra("ai_max_elo", mode.maxElo)
+            }
+            startActivity(intent)
             dialog.dismiss()
-            showChooseSideDialog(mode)
         }
 
-        modeEasy.setOnClickListener { pickSideAndStart(AiMode.EASY) }
-        modeNormal.setOnClickListener { pickSideAndStart(AiMode.NORMAL) }
-        modeHard.setOnClickListener { pickSideAndStart(AiMode.HARD) }
-        modePro.setOnClickListener { pickSideAndStart(AiMode.PRO) }
+        modeEasy.setOnClickListener { select(AiMode.EASY) }
+        modeNormal.setOnClickListener { select(AiMode.NORMAL) }
+        modeHard.setOnClickListener { select(AiMode.HARD) }
+        modePro.setOnClickListener { select(AiMode.PRO) }
 
         dialog.show()
-    }
-
-    private fun showChooseSideDialog(mode: AiMode) {
-        AlertDialog.Builder(this)
-            .setTitle(getString(R.string.choose_side))
-            .setItems(arrayOf(getString(R.string.play_as_white), getString(R.string.play_as_black))) { _, which ->
-                val humanIsWhite = (which == 0)
-                val intent = Intent(this, com.chesskel.ui.game.GameActivity::class.java).apply {
-                    putExtra("ai_mode", mode.name)
-                    putExtra("ai_min_elo", mode.minElo)
-                    putExtra("ai_max_elo", mode.maxElo)
-                    putExtra("human_plays_white", humanIsWhite)   // preferred
-                    putExtra("ai_plays_white", !humanIsWhite)     // fallback for older code
-                }
-                startActivity(intent)
-            }
-            .setCancelable(true)
-            .show()
     }
 }

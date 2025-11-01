@@ -26,4 +26,18 @@
     <string name="play_as_black">Jugar como piezas negras</string>
     <string name="btnPlayAgain">Jugar otra vez</string>
     <string name="btnMainMenu">Menu</string>
+    <string name="labelPvp">Jugador vs Jugador</string>
+    <string name="btnHostGame">Organizar una Partida</string>
+    <string name="btnJoin">Ingresar ( IP Manual)</string>
+    <string name="labelScanGames">Buscar partidas</string>
+    <string name="labelIP">Tu IP</string>
+    <string name="no_hosts_found">No se encontro un organizado</string>
+    <string name="enter_valid_ip">Ingrese una IP valida</string>
+    <string name="black">Negro</string>
+    <string name="white">Blanco</string>
+    <!-- Added -->
+    <string name="connected_status">Conectado a %1$s • Juegas %2$s</string>
+    <string name="resign_confirm">¿Seguro que quieres rendirte?</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
 </resources>

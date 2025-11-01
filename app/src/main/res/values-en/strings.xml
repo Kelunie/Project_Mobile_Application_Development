@@ -27,4 +27,18 @@
     <string name="play_as_black">Play as black</string>
     <string name="btnPlayAgain">Play Again</string>
     <string name="btnMainMenu">Main menu</string>
+    <string name="labelPvp">Player vs Player</string>
+    <string name="btnHostGame">Host Game</string>
+    <string name="btnJoin">Join (Manual IP)</string>
+    <string name="labelScanGames">Scan Games</string>
+    <string name="labelIP">Your IP</string>
+    <string name="no_hosts_found">no hosts found</string>
+    <string name="enter_valid_ip">Enter valid IP</string>
+    <string name="black">Black</string>
+    <string name="white">White</string>
+    <!-- Added -->
+    <string name="connected_status">Connected to %1$s • You play %2$s</string>
+    <string name="resign_confirm">Are you sure you want to resign?</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
 </resources>
