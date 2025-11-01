@@ -40,4 +40,15 @@
     <string name="resign_confirm">¿Seguro que quieres rendirte?</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
+    <string name="game_over_title">Juego Terminado</string>
+    <string name="white_wins">Piezas Blancas Ganan</string>
+    <string name="black_wins">Piezas Negras Ganan</string>
+    <string name="stalemate">Stalemate</string>
+    <string name="draw">Empate</string>
+    <string name="rematch">Retar Otra Vez</string>
+    <string name="menu">Menu</string>
+    <string name="rematch_waiting">Esperando al Oponente</string>
+    <string name="rematch_offer">Tu oponente ofrece una revancha</string>
+    <string name="rematch_declined">Revancha Rechazada</string>
+    <string name="rematch_started">Empieza la Revancha</string>
 </resources>

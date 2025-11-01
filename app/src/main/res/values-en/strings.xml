@@ -41,4 +41,15 @@
     <string name="resign_confirm">Are you sure you want to resign?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="game_over_title">Game Over</string>
+    <string name="white_wins">White wins</string>
+    <string name="black_wins">Black wins</string>
+    <string name="stalemate">Stalemate</string>
+    <string name="draw">Draw</string>
+    <string name="rematch">Rematch</string>
+    <string name="menu">Menu</string>
+    <string name="rematch_waiting">Waiting for opponent…</string>
+    <string name="rematch_offer">Your opponent offers a rematch</string>
+    <string name="rematch_declined">Rematch declined</string>
+    <string name="rematch_started">New game started</string>
 </resources>

@@ -1,20 +1,18 @@
 package com.chesskel.ui.pvp
 
 import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.chesskel.R
-import com.chesskel.game.ChessEngine
-import com.chesskel.game.GameEventListener
-import com.chesskel.game.GameResult
-import com.chesskel.game.Move
-import com.chesskel.game.Side
+import com.chesskel.game.*
 import com.chesskel.net.LanSession
 import com.chesskel.net.UdpDiscovery
 import com.chesskel.ui.game.ChessBoardView
+import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.SoundManager
 
 /**
@@ -33,6 +31,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     private var lan: LanSession? = null
     private var broadcaster: UdpDiscovery.HostBroadcaster? = null
     private val movesList = mutableListOf<String>()
+
+    private var gameOverDialog: AlertDialog? = null
+    private var rematchRequestedByMe = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,6 +91,38 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                     runOnUiThread {
                         Toast.makeText(this@PvpGameActivity, message, Toast.LENGTH_LONG).show()
                         // do not finish; allow retry/observation
+                    }
+                }
+
+                // Rematch protocol
+                override fun onRematchRequest() {
+                    runOnUiThread {
+                        AlertDialog.Builder(this@PvpGameActivity)
+                            .setTitle(getString(R.string.rematch))
+                            .setMessage(getString(R.string.rematch_offer))
+                            .setPositiveButton(getString(R.string.yes)) { d, _ ->
+                                lan?.respondRematch(true)
+                                resetForRematch()
+                                d.dismiss()
+                            }
+                            .setNegativeButton(getString(R.string.no)) { d, _ ->
+                                lan?.respondRematch(false)
+                                d.dismiss()
+                            }
+                            .show()
+                    }
+                }
+
+                override fun onRematchAccepted() {
+                    runOnUiThread {
+                        if (rematchRequestedByMe) resetForRematch()
+                    }
+                }
+
+                override fun onRematchDeclined() {
+                    runOnUiThread {
+                        rematchRequestedByMe = false
+                        Toast.makeText(this@PvpGameActivity, getString(R.string.rematch_declined), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -230,13 +263,18 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
             }
         }
 
-        if (engine.isCheckmate(opponentIsWhite)) {
-            val winner = if (!opponentIsWhite) "White" else "Black"
-            AlertDialog.Builder(this)
-                .setTitle("Game Over")
-                .setMessage("Checkmate! $winner wins")
-                .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
-                .show()
+        // After sending/applying, check for end-of-game conditions once and show options
+        val sideToMoveIsWhite = engine.whiteToMove
+        if (engine.isCheckmate(sideToMoveIsWhite)) {
+            val msg = if (!sideToMoveIsWhite) getString(R.string.white_wins) else getString(R.string.black_wins)
+            showGameOverDialog(msg)
+            return
+        }
+        // Stalemate: no legal moves and not in check
+        val noMoves = engine.allLegalMoves(sideToMoveIsWhite).isEmpty()
+        if (noMoves && !engine.isKingInCheck(sideToMoveIsWhite)) {
+            showGameOverDialog(getString(R.string.stalemate))
+            return
         }
     }
 
@@ -263,6 +301,46 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         tvInfo.text = if (engine.whiteToMove) getString(R.string.white_to_move) else getString(R.string.black_to_move)
     }
 
+    private fun showGameOverDialog(msg: String) {
+        if (gameOverDialog?.isShowing == true) return
+        val builder = AlertDialog.Builder(this)
+            .setTitle(getString(R.string.game_over_title))
+            .setMessage(msg)
+            .setCancelable(false)
+            .setPositiveButton(getString(R.string.rematch)) { d, _ ->
+                rematchRequestedByMe = true
+                lan?.requestRematch()
+                Toast.makeText(this, getString(R.string.rematch_waiting), Toast.LENGTH_SHORT).show()
+                d.dismiss()
+            }
+            .setNegativeButton(getString(R.string.menu)) { d, _ ->
+                d.dismiss()
+                exitToMenu()
+            }
+        gameOverDialog = builder.show()
+    }
+
+    private fun exitToMenu() {
+        try { broadcaster?.stop() } catch (_: Exception) {}
+        broadcaster = null
+        try { lan?.close() } catch (_: Exception) {}
+        lan = null
+        startActivity(Intent(this, MainMenuActivity::class.java))
+        finish()
+    }
+
+    private fun resetForRematch() {
+        rematchRequestedByMe = false
+        movesList.clear()
+        chessBoard.lastMove = null
+        engine.reset()
+        // Keep same sides as negotiated initially; board side is already set
+        chessBoard.invalidate()
+        tvMoves.text = ""
+        refreshUi()
+        Toast.makeText(this, getString(R.string.rematch_started), Toast.LENGTH_SHORT).show()
+    }
+
     override fun onCheck(side: Side) {
         SoundManager.playCheck()
     }
@@ -270,17 +348,14 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     override fun onGameEnd(result: GameResult) {
         SoundManager.playGameOver()
         val msg = when (result) {
-            GameResult.WHITE_WINS -> "White wins"
-            GameResult.BLACK_WINS -> "Black wins"
-            GameResult.STALEMATE -> "Stalemate"
-            GameResult.DRAW -> "Draw"
+            GameResult.WHITE_WINS -> getString(R.string.white_wins)
+            GameResult.BLACK_WINS -> getString(R.string.black_wins)
+            GameResult.STALEMATE -> getString(R.string.stalemate)
+            GameResult.DRAW -> getString(R.string.draw)
         }
-        AlertDialog.Builder(this)
-            .setTitle("Game Over")
-            .setMessage(msg)
-            .setPositiveButton("OK") { d, _ -> d.dismiss(); finish() }
-            .show()
+        runOnUiThread { showGameOverDialog(msg) }
     }
+
 
     // Keep session alive unless Activity is destroyed
     override fun onDestroy() {

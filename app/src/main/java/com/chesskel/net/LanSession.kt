@@ -38,6 +38,10 @@ class LanSession(
         fun onMove(fromR: Int, fromC: Int, toR: Int, toC: Int, promotion: Char?)
         fun onPeerLeft(reason: String? = null)
         fun onError(message: String)
+        // Rematch handshake callbacks (optional for UI to handle)
+        fun onRematchRequest() {}
+        fun onRematchAccepted() {}
+        fun onRematchDeclined() {}
     }
 
     private val tag = "LanSession"
@@ -167,12 +171,15 @@ class LanSession(
                         }
                         "resign" -> {
                             listener.onPeerLeft("Opponent resigned")
-                            close()
-                            return
+                            close(); return
                         }
                         "hello" -> {
                             // ignore stray hellos
                         }
+                        // New rematch protocol
+                        "rematch_req" -> listener.onRematchRequest()
+                        "rematch_yes" -> listener.onRematchAccepted()
+                        "rematch_no" -> listener.onRematchDeclined()
                         else -> {
                             // ignore unknown
                         }
@@ -223,6 +230,16 @@ class LanSession(
         val obj = JSONObject().put("type", "resign")
         safeSend(obj)
         close()
+    }
+
+    // --- Rematch helpers ---
+    fun requestRematch() {
+        val obj = JSONObject().put("type", "rematch_req")
+        safeSend(obj)
+    }
+    fun respondRematch(accept: Boolean) {
+        val obj = JSONObject().put("type", if (accept) "rematch_yes" else "rematch_no")
+        safeSend(obj)
     }
 
     private fun safeSend(obj: JSONObject) {
