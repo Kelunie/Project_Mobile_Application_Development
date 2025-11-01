@@ -51,4 +51,5 @@
     <string name="rematch_offer">Tu oponente ofrece una revancha</string>
     <string name="rematch_declined">Revancha Rechazada</string>
     <string name="rematch_started">Empieza la Revancha</string>
+    <string name="choose_color">Elegir Color</string>
 </resources>

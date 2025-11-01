@@ -52,4 +52,5 @@
     <string name="rematch_offer">Your opponent offers a rematch</string>
     <string name="rematch_declined">Rematch declined</string>
     <string name="rematch_started">New game started</string>
+    <string name="choose_color">Choose Side</string>
 </resources>
