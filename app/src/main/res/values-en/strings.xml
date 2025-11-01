@@ -25,4 +25,6 @@
     <string name="choose_side">Choose a side</string>
     <string name="play_as_white">Play as white</string>
     <string name="play_as_black">Play as black</string>
+    <string name="btnPlayAgain">Play Again</string>
+    <string name="btnMainMenu">Main menu</string>
 </resources>

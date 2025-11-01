@@ -24,4 +24,6 @@
     <string name="choose_side">Elige un lado</string>
     <string name="play_as_white">Jugar como piezas blancas</string>
     <string name="play_as_black">Jugar como piezas negras</string>
+    <string name="btnPlayAgain">Jugar otra vez</string>
+    <string name="btnMainMenu">Menu</string>
 </resources>

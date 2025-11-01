@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -32,6 +33,13 @@ class GameActivity : ComponentActivity(), GameEventListener {
     private lateinit var tvMoves: TextView
     private lateinit var btnResign: Button
 
+    // New buttons requested: Play Again and Main Menu
+    private lateinit var btnPlayAgain: Button
+    private lateinit var btnMainMenu: Button
+
+    // container for post-game buttons (important: make container visible when showing buttons)
+    private lateinit var postGameButtons: View
+
     private val movesList = mutableListOf<String>()
 
     private var mpCheck: MediaPlayer? = null
@@ -49,6 +57,11 @@ class GameActivity : ComponentActivity(), GameEventListener {
         tvGameInfo = findViewById(R.id.tvGameInfo)
         tvMoves = findViewById(R.id.tvMoves)
         btnResign = findViewById(R.id.btnResign)
+
+        // find new buttons (they must exist in the activity_game layout)
+        btnPlayAgain = findViewById(R.id.btnPlayAgain)
+        btnMainMenu = findViewById(R.id.btnMainMenu)
+        postGameButtons = findViewById(R.id.post_game_buttons)
 
         engine.eventListener = this
 
@@ -94,6 +107,18 @@ class GameActivity : ComponentActivity(), GameEventListener {
             Toast.makeText(this, getString(R.string.btnResgin), Toast.LENGTH_SHORT).show()
             finish()
         }
+
+        // Wire new buttons
+        btnPlayAgain.setOnClickListener {
+            resetGame()
+        }
+
+        btnMainMenu.setOnClickListener {
+            finish() // return to previous activity (MainMenuActivity is expected)
+        }
+
+        // ensure the post-game container is hidden initially
+        postGameButtons.visibility = View.GONE
 
         refreshUi()
 
@@ -146,6 +171,9 @@ class GameActivity : ComponentActivity(), GameEventListener {
         val san = engine.moveToString(m)
         engine.applyMove(m)
 
+        // store last move for board highlighting and pass it to the board view
+        chessBoard.lastMove = m
+
         // After applying the move, engine.whiteToMove indicates who is to move now (the opponent).
         val opponentIsWhite = engine.whiteToMove
 
@@ -169,6 +197,15 @@ class GameActivity : ComponentActivity(), GameEventListener {
             val winner = if (!opponentIsWhite) "White" else "Black"
             Toast.makeText(this, "Checkmate! $winner wins", Toast.LENGTH_LONG).show()
             aiBot?.stop()
+            showPostGameOptions()
+            return
+        }
+
+        // Stalemate / draw detection: if no legal moves but not in check -> stalemate
+        if (engine.allLegalMoves(engine.whiteToMove).isEmpty() && !engine.isKingInCheck(engine.whiteToMove)) {
+            Toast.makeText(this, "Stalemate", Toast.LENGTH_LONG).show()
+            aiBot?.stop()
+            showPostGameOptions()
             return
         }
 
@@ -218,7 +255,44 @@ class GameActivity : ComponentActivity(), GameEventListener {
             GameResult.WHITE_WINS, GameResult.BLACK_WINS -> mpWin?.start()
             GameResult.STALEMATE, GameResult.DRAW -> mpDraw?.start()
         }
-        // show end-game dialog / navigate away
+        // stop AI and surface post-game options
+        aiBot?.stop()
+        showPostGameOptions()
+    }
+
+    private fun showPostGameOptions() {
+        // Make the container visible and show buttons so user can choose next step.
+        postGameButtons.visibility = View.VISIBLE
+        // Optionally also disable resign to avoid confusion
+        btnResign.isEnabled = false
+    }
+
+    private fun resetGame() {
+        // Reset engine state, UI and lists
+        aiBot?.stop()
+        engine.reset()
+        movesList.clear()
+        updateMovesText()
+        chessBoard.bindEngine(engine)
+        chessBoard.lastMove = null
+        chessBoard.invalidate()
+        refreshUi()
+
+        // hide post-game container again and re-enable resign
+        postGameButtons.visibility = View.GONE
+        btnResign.isEnabled = true
+
+        // Re-create AI bot in case preferences/intent remain (reuse aiMode)
+        aiMode?.let { mode ->
+            aiBot = AiBot(engine, mode) { aiMove ->
+                runOnUiThread { performMove(aiMove) }
+            }
+        }
+
+        // If AI should play white and it's white's turn, start AI immediately
+        if (aiMode != null && aiPlaysWhite && engine.whiteToMove) {
+            aiBot?.thinkAndPlay()
+        }
     }
 
     override fun onDestroy() {
