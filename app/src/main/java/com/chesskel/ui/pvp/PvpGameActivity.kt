@@ -34,6 +34,10 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
     private var gameOverDialog: AlertDialog? = null
     private var rematchRequestedByMe = false
+    // Keep the last game-over message so we can re-show the dialog if a rematch is declined
+    private var lastGameOverMsg: String? = null
+    // Dialog instance for incoming rematch offers so we can dismiss it programmatically
+    private var rematchOfferDialog: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,24 +101,39 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 // Rematch protocol
                 override fun onRematchRequest() {
                     runOnUiThread {
-                        AlertDialog.Builder(this@PvpGameActivity)
+                        // If we already have an offer dialog, ignore duplicate requests
+                        if (rematchOfferDialog?.isShowing == true) return@runOnUiThread
+                        val dlg = AlertDialog.Builder(this@PvpGameActivity)
                             .setTitle(getString(R.string.rematch))
                             .setMessage(getString(R.string.rematch_offer))
                             .setPositiveButton(getString(R.string.yes)) { d, _ ->
-                                lan?.respondRematch(true)
+                                // Accept rematch: inform peer, reset game and dismiss both dialogs
+                                try { lan?.respondRematch(true) } catch (_: Exception) {}
                                 resetForRematch()
-                                d.dismiss()
+                                try { d.dismiss() } catch (_: Exception) {}
+                                rematchOfferDialog = null
                             }
                             .setNegativeButton(getString(R.string.no)) { d, _ ->
-                                lan?.respondRematch(false)
-                                d.dismiss()
+                                try { lan?.respondRematch(false) } catch (_: Exception) {}
+                                try { d.dismiss() } catch (_: Exception) {}
+                                rematchOfferDialog = null
                             }
-                            .show()
+                            .setOnCancelListener {
+                                // treat cancel like decline
+                                try { lan?.respondRematch(false) } catch (_: Exception) {}
+                                rematchOfferDialog = null
+                            }
+                            .create()
+                        rematchOfferDialog = dlg
+                        dlg.show()
                     }
                 }
 
                 override fun onRematchAccepted() {
                     runOnUiThread {
+                        // Dismiss any incoming-offer dialog if present
+                        rematchOfferDialog?.let { try { if (it.isShowing) it.dismiss() } catch (_: Exception) {} }
+                        rematchOfferDialog = null
                         if (rematchRequestedByMe) resetForRematch()
                     }
                 }
@@ -123,6 +142,14 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                     runOnUiThread {
                         rematchRequestedByMe = false
                         Toast.makeText(this@PvpGameActivity, getString(R.string.rematch_declined), Toast.LENGTH_SHORT).show()
+                        // Dismiss any incoming-offer dialog
+                        rematchOfferDialog?.let { try { if (it.isShowing) it.dismiss() } catch (_: Exception) {} }
+                        rematchOfferDialog = null
+                        // If we had requested a rematch and the peer declined, re-show the game-over dialog
+                        // so the user can choose to go to menu or attempt rematch again.
+                        lastGameOverMsg?.let { msg ->
+                            showGameOverDialog(msg)
+                        }
                     }
                 }
             }
@@ -303,6 +330,11 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
     private fun showGameOverDialog(msg: String) {
         if (gameOverDialog?.isShowing == true) return
+        // store message to allow re-showing if rematch negotiation fails
+        lastGameOverMsg = msg
+        // Ensure any rematch-offer dialog is dismissed before showing game-over options
+        rematchOfferDialog?.let { try { if (it.isShowing) it.dismiss() } catch (_: Exception) {} }
+        rematchOfferDialog = null
         val builder = AlertDialog.Builder(this)
             .setTitle(getString(R.string.game_over_title))
             .setMessage(msg)
@@ -331,6 +363,14 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
     private fun resetForRematch() {
         rematchRequestedByMe = false
+        // Make sure any lingering game-over dialog (or rematch dialogs) are dismissed
+        gameOverDialog?.let {
+            try { if (it.isShowing) it.dismiss() } catch (_: Exception) {}
+        }
+        gameOverDialog = null
+        rematchOfferDialog?.let { try { if (it.isShowing) it.dismiss() } catch (_: Exception) {} }
+        rematchOfferDialog = null
+        lastGameOverMsg = null
         movesList.clear()
         chessBoard.lastMove = null
         engine.reset()
