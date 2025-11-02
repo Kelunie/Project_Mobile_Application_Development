@@ -57,6 +57,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         val role = if (roleStr == "client") LanSession.Role.CLIENT else LanSession.Role.HOST
         val hostIp = intent.getStringExtra("host_ip")
         val hostPlaysWhite = intent.getBooleanExtra("host_white", true)
+        // optional display names passed from the lobby
+        val peerName = intent.getStringExtra("peer_name")
+        val hostName = intent.getStringExtra("host_name")
 
         // Start LAN session
         lan = LanSession(
@@ -71,7 +74,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                         // Tell the board which side the human controls
                         chessBoard.humanIsWhite = iPlayWhite
                         val sideTxt = if (iPlayWhite) getString(R.string.white) else getString(R.string.black)
-                        tvInfo.text = getString(R.string.connected_status, peerIp, sideTxt)
+                        // Show peer name if available, otherwise show IP
+                        val peerDisplay = peerName ?: peerIp
+                        tvInfo.text = getString(R.string.connected_status, peerDisplay, sideTxt)
                         // Stop broadcasting once someone connects
                         broadcaster?.stop()
                         broadcaster = null
@@ -162,7 +167,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 broadcaster = UdpDiscovery.HostBroadcaster(
                     hostIp = ip,
                     tcpPort = LanSession.DEFAULT_PORT,
-                    name = "ChessKel Host ($ip)"
+                    name = hostName ?: "ChessKel Host ($ip)"
                 ).also { it.start() }
             }
         }

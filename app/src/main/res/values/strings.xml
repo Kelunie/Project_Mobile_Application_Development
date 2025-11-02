@@ -52,4 +52,10 @@
     <string name="rematch_declined">Revancha Rechazada</string>
     <string name="rematch_started">Empieza la Revancha</string>
     <string name="choose_color">Elegir Color</string>
+    <string name="enter_account_name">Introduce un nombre de cuenta</string>
+    <string name="account_name_hint">Tu nombre (ej. Kelunie)</string>
+    <string name="save">Guardar</string>
+    <string name="account_name_required">El nombre es obligatorio</string>
+    <string name="account_name_saved">Nombre guardado</string>
+    <string name="local_ip_port">%1$s: %2$s:%3$d</string>
 </resources>

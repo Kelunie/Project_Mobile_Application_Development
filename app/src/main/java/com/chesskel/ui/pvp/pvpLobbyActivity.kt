@@ -32,7 +32,8 @@ class PvpLobbyActivity : ComponentActivity() {
         scanBtn = findViewById(R.id.btnScan)
 
         val localIp = LanSession.getLocalIpv4() ?: "-"
-        // Display local IP and port label without String.format on non-format string
+        @Suppress("SetTextI18n")
+        // Display local IP and port (not localized compound label)
         tvIp.text = "${getString(R.string.labelIP)}: $localIp:${LanSession.DEFAULT_PORT}"
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
@@ -44,6 +45,7 @@ class PvpLobbyActivity : ComponentActivity() {
                 Intent(this, PvpGameActivity::class.java)
                     .putExtra("role", "client")
                     .putExtra("host_ip", host.ip)
+                    .putExtra("peer_name", host.name)
             )
         }
 
@@ -56,10 +58,16 @@ class PvpLobbyActivity : ComponentActivity() {
                 .setItems(items) { dlg, which ->
                     val iPlayWhite = (which == 0)
                     // IMPORTANT: Host must go into game screen; that starts broadcasting and TCP server
+                    val prefs = getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
+                    val userId = prefs.getLong("current_user_id", -1L)
+                    val db = com.chesskel.data.DBHelper(this)
+                    val myName = if (userId > 0L) db.getUserById(userId)?.nombre else null
+                    val hostNameToSend = myName ?: "ChessKel Host ($localIp)"
                     startActivity(
                         Intent(this, PvpGameActivity::class.java)
                             .putExtra("role", "host")
                             .putExtra("host_white", iPlayWhite)
+                            .putExtra("host_name", hostNameToSend)
                     )
                     dlg.dismiss()
                 }.show()

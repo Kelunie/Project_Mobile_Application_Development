@@ -53,4 +53,9 @@
     <string name="rematch_declined">Rematch declined</string>
     <string name="rematch_started">New game started</string>
     <string name="choose_color">Choose Side</string>
+    <string name="enter_account_name">Enter an account name</string>
+    <string name="account_name_hint">Your name (e.g. Kelunie)</string>
+    <string name="save">Save</string>
+    <string name="account_name_required">Name is required</string>
+    <string name="account_name_saved">Name saved</string>
 </resources>
