@@ -62,6 +62,16 @@ class DBHelper(context: Context) :
         }
     }
 
+    // Get a user by id
+    fun getUserById(id: Long): UserEntity? {
+        readableDatabase.rawQuery(
+            "SELECT id,nombre,email,password_hash,created_at FROM usuarios WHERE id=? LIMIT 1",
+            arrayOf(id.toString())
+        ).use { c ->
+            return if (c.moveToFirst()) c.toUser() else null
+        }
+    }
+
     // Extension function to convert Cursor to UserEntity
     private fun Cursor.toUser(): UserEntity =
         UserEntity(

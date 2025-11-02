@@ -26,6 +26,48 @@ class ChessEngine {
         eventListener?.onGameEnd(result)
     }
 
+    // >>>>> ADD: lightweight snapshot/restore for AI search
+    data class Snapshot(
+        val boardCopy: Array<CharArray>,
+        val whiteToMove: Boolean,
+        val whiteKingMoved: Boolean,
+        val blackKingMoved: Boolean,
+        val whiteRookA_moved: Boolean,
+        val whiteRookH_moved: Boolean,
+        val blackRookA_moved: Boolean,
+        val blackRookH_moved: Boolean,
+        val enPassantTarget: Pair<Int,Int>?
+    )
+
+    fun snapshot(): Snapshot {
+        val boardCopy = Array(8) { r -> board[r].copyOf() }
+        return Snapshot(
+            boardCopy = boardCopy,
+            whiteToMove = whiteToMove,
+            whiteKingMoved = whiteKingMoved,
+            blackKingMoved = blackKingMoved,
+            whiteRookA_moved = whiteRookA_moved,
+            whiteRookH_moved = whiteRookH_moved,
+            blackRookA_moved = blackRookA_moved,
+            blackRookH_moved = blackRookH_moved,
+            enPassantTarget = enPassantTarget
+        )
+    }
+
+    fun restore(s: Snapshot) {
+        for (r in 0..7) {
+            board[r] = s.boardCopy[r].copyOf()
+        }
+        whiteToMove = s.whiteToMove
+        whiteKingMoved = s.whiteKingMoved
+        blackKingMoved = s.blackKingMoved
+        whiteRookA_moved = s.whiteRookA_moved
+        whiteRookH_moved = s.whiteRookH_moved
+        blackRookA_moved = s.blackRookA_moved
+        blackRookH_moved = s.blackRookH_moved
+        enPassantTarget = s.enPassantTarget
+    }
+    // <<<<< END ADD
 
     init { reset() }
 
@@ -497,6 +539,7 @@ class ChessEngine {
     }
 
     // Simple SAN-like formatting; now simulates the move to determine check/checkmate suffix.
+    // Enhanced: produce 0-0 and 0-0-0 for castling and preserve promotion/capture/check/mate suffixes.
     fun moveToString(m: Move): String {
         fun sq(r: Int, c: Int) = "${('a' + c)}${8 - r}"
         val fromP = board[m.fromR][m.fromC]
@@ -505,7 +548,29 @@ class ChessEngine {
         val isCapture = toP != '.'
         val promo = m.promotion
 
-        // simulate move on a copy to determine check / mate
+        // detect castling on the current board: king move of two squares horizontally
+        if (fromP.lowercaseChar() == 'k' && kotlin.math.abs(m.toC - m.fromC) == 2) {
+            // simulate resulting board to determine check / mate suffix
+            val bcopy = copyBoard(board)
+            applyMoveOnBoard(bcopy, m, enPassantTarget)
+            val moverIsWhite = fromP.isUpperCase()
+            val opponentIsWhite = !moverIsWhite
+            val kingPos = findKing(opponentIsWhite, bcopy)
+            val oppInCheck = if (kingPos != null) isSquareAttacked(kingPos.first, kingPos.second, moverIsWhite, bcopy) else false
+            val newEp = if (fromP.lowercaseChar() == 'p' && kotlin.math.abs(m.toR - m.fromR) == 2) {
+                ((m.fromR + m.toR) / 2) to m.fromC
+            } else null
+            val oppHasMoves = allLegalMovesOnBoard(opponentIsWhite, bcopy, newEp).isNotEmpty()
+            val suffix = when {
+                oppInCheck && !oppHasMoves -> "#"
+                oppInCheck -> "+"
+                else -> ""
+            }
+            // short vs long castle
+            return if (m.toC > m.fromC) "0-0$suffix" else "0-0-0$suffix"
+        }
+
+        // simulate move on a copy to determine check / mate for generic moves
         val bcopy = copyBoard(board)
         // apply move using current enPassantTarget (so en-passant captures are handled)
         applyMoveOnBoard(bcopy, m, enPassantTarget)

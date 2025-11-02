@@ -43,6 +43,36 @@
             android:text="@string/btnResgin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <!-- New: Post-game controls (hidden by default from code) -->
+        <LinearLayout
+            android:id="@+id/post_game_buttons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <Button
+                android:id="@+id/btnPlayAgain"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/btnPlayAgain" />
+
+            <View
+                android:layout_width="8dp"
+                android:layout_height="match_parent" />
+
+            <Button
+                android:id="@+id/btnMainMenu"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="@string/btnMainMenu" />
+        </LinearLayout>
+
     </LinearLayout>
 
     <!-- Bottom: board area (bottom half) -->

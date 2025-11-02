@@ -18,14 +18,22 @@ class ChessBoardView @JvmOverloads constructor(
     private val lightColor = Color.parseColor("#F0D9B5")
     private val darkColor = Color.parseColor("#B58863")
     private val highlightColor = Color.parseColor("#6fa8dc")
+    private val lastMoveFromColor = Color.argb(160, 0, 200, 0) // translucent green
+    private val lastMoveToColor = Color.argb(160, 200, 200, 0) // translucent yellow
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private var squareSize = 0f
 
     private var engine: ChessEngine? = null
     var onMove: ((Move) -> Unit)? = null
 
+    // New: which color the human controls (true = White, false = Black)
+    var humanIsWhite: Boolean = true
+
     private var selR = -1; private var selC = -1
     private var possibleMoves: List<Move> = emptyList()
+
+    // store last move to highlight on board (optional)
+    var lastMove: Move? = null
 
     // cache scaled piece bitmaps by resource id
     private val pieceCache = mutableMapOf<Int, Bitmap>()
@@ -67,7 +75,19 @@ class ChessBoardView @JvmOverloads constructor(
             canvas.drawRect(left, top, left + squareSize, top + squareSize, paint)
         }
 
-        // highlight selection square
+        // highlight last move from/to if available (draw under pieces)
+        lastMove?.let { lm ->
+            // from-square
+            paint.style = Paint.Style.FILL
+            paint.color = lastMoveFromColor
+            canvas.drawRect(lm.fromC * squareSize, lm.fromR * squareSize, (lm.fromC + 1) * squareSize, (lm.fromR + 1) * squareSize, paint)
+            // to-square (draw a different color on top)
+            paint.color = lastMoveToColor
+            canvas.drawRect(lm.toC * squareSize, lm.toR * squareSize, (lm.toC + 1) * squareSize, (lm.toR + 1) * squareSize, paint)
+            paint.alpha = 255
+        }
+
+        // highlight selection square (draw over last-move highlight to make selection visible)
         if (selR >= 0 && selC >= 0) {
             paint.color = highlightColor
             paint.alpha = 120
@@ -159,6 +179,10 @@ class ChessBoardView @JvmOverloads constructor(
         val engine = engine ?: return false
         if (event.action != MotionEvent.ACTION_DOWN) return false
         if (squareSize == 0f) squareSize = width / 8f
+
+        // New: ignore input when it's not the human's turn
+        if (engine.whiteToMove != humanIsWhite) return false
+
         val c = (event.x / squareSize).toInt().coerceIn(0, 7)
         val r = (event.y / squareSize).toInt().coerceIn(0, 7)
         val piece = engine.pieceAt(r, c)
@@ -170,8 +194,8 @@ class ChessBoardView @JvmOverloads constructor(
             return true
         }
 
-        // select own piece (only when it is that side's turn) and show legal moves
-        if (piece != '.' && piece.isUpperCase() == engine.whiteToMove) {
+        // select human's piece only, and only on human's turn
+        if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
             selR = r; selC = c
             possibleMoves = engine.legalMovesFor(r, c)
 

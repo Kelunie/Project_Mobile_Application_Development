@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import com.chesskel.R
 import com.chesskel.game.AiMode
+import com.chesskel.ui.pvp.PvpLobbyActivity
 
 class MainMenuActivity : ComponentActivity() {
 
@@ -22,8 +23,8 @@ class MainMenuActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnPvp).setOnClickListener {
-            // keep existing behavior or start PvP activity
-            Toast.makeText(this, "Player vs Player (TODO)", Toast.LENGTH_SHORT).show()
+            // Launch the new PvP lobby (LAN)
+            startActivity(Intent(this, PvpLobbyActivity::class.java))
         }
 
         findViewById<Button>(R.id.btnProfile).setOnClickListener {
@@ -43,12 +44,8 @@ class MainMenuActivity : ComponentActivity() {
 
         fun select(mode: AiMode) {
             Toast.makeText(applicationContext, "${mode.label} selected", Toast.LENGTH_SHORT).show()
-            val intent = Intent(this, com.chesskel.ui.game.GameActivity::class.java).apply {
-                putExtra("ai_mode", mode.name)
-                putExtra("ai_min_elo", mode.minElo)
-                putExtra("ai_max_elo", mode.maxElo)
-            }
-            startActivity(intent)
+            // Instead of immediately starting the game, ask the player which color they want to play.
+            showAiColorChoice(mode)
             dialog.dismiss()
         }
 
@@ -58,5 +55,24 @@ class MainMenuActivity : ComponentActivity() {
         modePro.setOnClickListener { select(AiMode.PRO) }
 
         dialog.show()
+    }
+
+    // New helper: show a simple dialog to choose whether the human plays White or Black.
+    private fun showAiColorChoice(mode: AiMode) {
+        val items = arrayOf(getString(R.string.play_as_white), getString(R.string.play_as_black))
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.choose_color))
+            .setItems(items) { _, which ->
+                val humanPlaysWhite = (which == 0)
+                val intent = Intent(this, com.chesskel.ui.game.GameActivity::class.java).apply {
+                    putExtra("ai_mode", mode.name)
+                    putExtra("ai_min_elo", mode.minElo)
+                    putExtra("ai_max_elo", mode.maxElo)
+                    putExtra("human_plays_white", humanPlaysWhite)
+                }
+                startActivity(intent)
+            }
+            .setCancelable(true)
+            .show()
     }
 }

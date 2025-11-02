@@ -5,6 +5,7 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.media.MediaPlayer
 import android.os.Bundle
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -24,12 +25,20 @@ class GameActivity : ComponentActivity(), GameEventListener {
     private val engine = ChessEngine()
     private var aiBot: AiBot? = null
     private var aiMode: AiMode? = null
-    private var aiPlaysWhite = false // default: AI plays black
+    // If true, AI controls White; human controls Black. Otherwise human is White.
+    private var aiPlaysWhite = false
 
     private lateinit var chessBoard: ChessBoardView
     private lateinit var tvGameInfo: TextView
     private lateinit var tvMoves: TextView
     private lateinit var btnResign: Button
+
+    // New buttons requested: Play Again and Main Menu
+    private lateinit var btnPlayAgain: Button
+    private lateinit var btnMainMenu: Button
+
+    // container for post-game buttons (important: make container visible when showing buttons)
+    private lateinit var postGameButtons: View
 
     private val movesList = mutableListOf<String>()
 
@@ -49,6 +58,11 @@ class GameActivity : ComponentActivity(), GameEventListener {
         tvMoves = findViewById(R.id.tvMoves)
         btnResign = findViewById(R.id.btnResign)
 
+        // find new buttons (they must exist in the activity_game layout)
+        btnPlayAgain = findViewById(R.id.btnPlayAgain)
+        btnMainMenu = findViewById(R.id.btnMainMenu)
+        postGameButtons = findViewById(R.id.post_game_buttons)
+
         engine.eventListener = this
 
         mpCheck = MediaPlayer.create(this, R.raw.sound_check)
@@ -57,19 +71,28 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         chessBoard.bindEngine(engine)
 
-        intent?.let {
-            it.getStringExtra("ai_mode")?.let { modeName ->
-                try {
-                    aiMode = AiMode.valueOf(modeName)
-                } catch (_: IllegalArgumentException) {
-                    // ignore invalid mode
-                }
-            }
-            if (it.hasExtra("ai_plays_white")) {
-                aiPlaysWhite = it.getBooleanExtra("ai_plays_white", false)
+        // Read AI mode first
+        intent?.getStringExtra("ai_mode")?.let { modeName ->
+            try {
+                aiMode = AiMode.valueOf(modeName)
+            } catch (_: IllegalArgumentException) {
+                // ignore invalid mode
             }
         }
 
+        // Decide sides from Intent (prefer human_plays_white; fall back to ai_plays_white)
+        aiPlaysWhite = when {
+            intent?.hasExtra("human_plays_white") == true ->
+                !intent.getBooleanExtra("human_plays_white", true)
+            intent?.hasExtra("ai_plays_white") == true ->
+                intent.getBooleanExtra("ai_plays_white", false)
+            else -> false // default: AI plays Black (human plays White)
+        }
+
+        // Tell the board which side the human controls
+        chessBoard.humanIsWhite = !aiPlaysWhite
+
+        // Initialize AI bot if mode is set
         aiMode?.let { mode ->
             aiBot = AiBot(engine, mode) { aiMove ->
                 runOnUiThread { performMove(aiMove) }
@@ -85,6 +108,18 @@ class GameActivity : ComponentActivity(), GameEventListener {
             finish()
         }
 
+        // Wire new buttons
+        btnPlayAgain.setOnClickListener {
+            resetGame()
+        }
+
+        btnMainMenu.setOnClickListener {
+            finish() // return to previous activity (MainMenuActivity is expected)
+        }
+
+        // ensure the post-game container is hidden initially
+        postGameButtons.visibility = View.GONE
+
         refreshUi()
 
         // If AI should play white and it's white's turn, start AI immediately
@@ -94,6 +129,15 @@ class GameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun onPlayerAttemptMove(m: Move) {
+        // Guard against moving opponent pieces or playing out of turn
+        val humanIsWhite = !aiPlaysWhite
+        val mover = engine.pieceAt(m.fromR, m.fromC)
+        if (engine.whiteToMove != humanIsWhite || mover == '.' || mover.isUpperCase() != humanIsWhite) {
+            // Ignore or show a brief hint
+            Toast.makeText(this, getString(R.string.not_your_piece), Toast.LENGTH_SHORT).show()
+            return
+        }
+
         if (m.promotion != null) {
             showPromotionDialog(m)
         } else {
@@ -127,8 +171,10 @@ class GameActivity : ComponentActivity(), GameEventListener {
         val san = engine.moveToString(m)
         engine.applyMove(m)
 
+        // store last move for board highlighting and pass it to the board view
+        chessBoard.lastMove = m
+
         // After applying the move, engine.whiteToMove indicates who is to move now (the opponent).
-        // Use that directly to check whether the side to move (the opponent) is in check/checkmate.
         val opponentIsWhite = engine.whiteToMove
 
         // Play appropriate sound
@@ -151,6 +197,15 @@ class GameActivity : ComponentActivity(), GameEventListener {
             val winner = if (!opponentIsWhite) "White" else "Black"
             Toast.makeText(this, "Checkmate! $winner wins", Toast.LENGTH_LONG).show()
             aiBot?.stop()
+            showPostGameOptions()
+            return
+        }
+
+        // Stalemate / draw detection: if no legal moves but not in check -> stalemate
+        if (engine.allLegalMoves(engine.whiteToMove).isEmpty() && !engine.isKingInCheck(engine.whiteToMove)) {
+            Toast.makeText(this, "Stalemate", Toast.LENGTH_LONG).show()
+            aiBot?.stop()
+            showPostGameOptions()
             return
         }
 
@@ -200,7 +255,44 @@ class GameActivity : ComponentActivity(), GameEventListener {
             GameResult.WHITE_WINS, GameResult.BLACK_WINS -> mpWin?.start()
             GameResult.STALEMATE, GameResult.DRAW -> mpDraw?.start()
         }
-        // show end-game dialog / navigate away
+        // stop AI and surface post-game options
+        aiBot?.stop()
+        showPostGameOptions()
+    }
+
+    private fun showPostGameOptions() {
+        // Make the container visible and show buttons so user can choose next step.
+        postGameButtons.visibility = View.VISIBLE
+        // Optionally also disable resign to avoid confusion
+        btnResign.isEnabled = false
+    }
+
+    private fun resetGame() {
+        // Reset engine state, UI and lists
+        aiBot?.stop()
+        engine.reset()
+        movesList.clear()
+        updateMovesText()
+        chessBoard.bindEngine(engine)
+        chessBoard.lastMove = null
+        chessBoard.invalidate()
+        refreshUi()
+
+        // hide post-game container again and re-enable resign
+        postGameButtons.visibility = View.GONE
+        btnResign.isEnabled = true
+
+        // Re-create AI bot in case preferences/intent remain (reuse aiMode)
+        aiMode?.let { mode ->
+            aiBot = AiBot(engine, mode) { aiMove ->
+                runOnUiThread { performMove(aiMove) }
+            }
+        }
+
+        // If AI should play white and it's white's turn, start AI immediately
+        if (aiMode != null && aiPlaysWhite && engine.whiteToMove) {
+            aiBot?.thinkAndPlay()
+        }
     }
 
     override fun onDestroy() {
