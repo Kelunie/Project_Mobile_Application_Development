@@ -353,12 +353,33 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun exitToMenu() {
+        // Dismiss any dialogs first so no window leaks or blocked UI
+        try { gameOverDialog?.let { if (it.isShowing) it.dismiss() } } catch (_: Exception) {}
+        gameOverDialog = null
+        try { rematchOfferDialog?.let { if (it.isShowing) it.dismiss() } } catch (_: Exception) {}
+        rematchOfferDialog = null
+
+        // Stop broadcasting immediately
         try { broadcaster?.stop() } catch (_: Exception) {}
         broadcaster = null
-        try { lan?.close() } catch (_: Exception) {}
+
+        // Best-effort: notify the peer that we're returning to menu
+        try { lan?.sendExitToMenu() } catch (_: Exception) {}
+
+        // Capture LAN session and null it to prevent races; close in background.
+        val lanToClose = lan
         lan = null
+
+        // Navigate immediately so the user returns to the menu without waiting for network teardown.
         startActivity(Intent(this, MainMenuActivity::class.java))
         finish()
+
+        // Close the LAN session asynchronously (fire-and-forget)
+        if (lanToClose != null) {
+            Thread {
+                try { lanToClose.close() } catch (_: Exception) {}
+            }.start()
+        }
     }
 
     private fun resetForRematch() {

@@ -180,6 +180,11 @@ class LanSession(
                         "rematch_req" -> listener.onRematchRequest()
                         "rematch_yes" -> listener.onRematchAccepted()
                         "rematch_no" -> listener.onRematchDeclined()
+                        // Peer navigated back to menu
+                        "exit_menu" -> {
+                            listener.onPeerLeft("Opponent returned to menu")
+                            close(); return
+                        }
                         else -> {
                             // ignore unknown
                         }
@@ -239,6 +244,12 @@ class LanSession(
     }
     fun respondRematch(accept: Boolean) {
         val obj = JSONObject().put("type", if (accept) "rematch_yes" else "rematch_no")
+        safeSend(obj)
+    }
+
+    // Notify the peer that we are returning to the menu so they can also exit
+    fun sendExitToMenu() {
+        val obj = JSONObject().put("type", "exit_menu")
         safeSend(obj)
     }
 
