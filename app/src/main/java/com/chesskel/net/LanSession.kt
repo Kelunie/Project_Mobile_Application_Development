@@ -237,6 +237,30 @@ class LanSession(
         close()
     }
 
+    // NEW: async resign to avoid blocking the UI thread.
+    // Sends the resign message and then closes the session in a background thread.
+    fun resignAsync() {
+        val obj = JSONObject().put("type", "resign")
+        val payload = obj.toString()
+        sendExecutor.execute {
+            try {
+                synchronized(writerLock) {
+                    writer?.println(payload)
+                    if (writer?.checkError() == true) {
+                        listener.onError("Send failed (connection error)")
+                    }
+                }
+            } catch (e: Exception) {
+                if (!closed.get()) listener.onError("Send error: ${e.message}")
+            } finally {
+                // Close on a separate thread to avoid shutting down this executor mid-task
+                Thread {
+                    try { close() } catch (_: Exception) {}
+                }.start()
+            }
+        }
+    }
+
     // --- Rematch helpers ---
     fun requestRematch() {
         val obj = JSONObject().put("type", "rematch_req")

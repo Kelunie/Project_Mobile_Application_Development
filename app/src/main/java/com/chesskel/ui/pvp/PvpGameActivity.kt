@@ -95,7 +95,8 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 override fun onPeerLeft(reason: String?) {
                     runOnUiThread {
                         Toast.makeText(this@PvpGameActivity, reason ?: "Disconnected", Toast.LENGTH_LONG).show()
-                        finish()
+                        // Salida ordenada (cierre LAN en background + volver al menú sin bloquear)
+                        exitToMenu()
                     }
                 }
 
@@ -199,9 +200,11 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 .setTitle(getString(R.string.btnResgin))
                 .setMessage(getString(R.string.resign_confirm))
                 .setPositiveButton(getString(R.string.yes)) { d, _ ->
-                    try { lan?.resign() } catch (_: Exception) {}
-                    d.dismiss()
-                    finish()
+                    // 1) Enviar resign y cerrar LAN en background
+                    try { lan?.resignAsync() } catch (_: Exception) {}
+                    // 2) Cerrar pantalla de forma “no bloqueante”
+                    try { d.dismiss() } catch (_: Exception) {}
+                    exitToMenu()
                 }
                 .setNegativeButton(getString(R.string.no)) { d, _ -> d.dismiss() }
                 .show()
