@@ -84,4 +84,9 @@
     <string name="elo_range_normal">550 - 800 ELO</string>
     <string name="elo_range_hard">900 - 1200 ELO</string>
     <string name="elo_range_pro">1300+ ELO</string>
+
+    <!-- Login / auth strings -->
+    <string name="login_fields_required">Email and password are required</string>
+    <string name="login_successful">Login successful</string>
+    <string name="invalid_credentials">Invalid credentials</string>
 </resources>
