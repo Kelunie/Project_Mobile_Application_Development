@@ -88,5 +88,9 @@
     <!-- Login / auth strings -->
     <string name="login_fields_required">Email and password are required</string>
     <string name="login_successful">Login successful</string>
-    <string name="invalid_credentials">Invalid credentials</string>
+    <string name="invalid_credentials">Invalid Credentials</string>
+    <string name="theme_toggle">Tema</string>
+    <string name="switch_to_dark">Cambiar a Modo Oscuro</string>
+    <string name="switch_to_light">Cambiar a Modo Claro</string>
+    <string name="version_text">Version %1$s</string>
 </resources>

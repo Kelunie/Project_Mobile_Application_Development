@@ -88,4 +88,9 @@
     <string name="login_fields_required">Email y contraseña son obligatorios</string>
     <string name="login_successful">Inicio de sesión exitoso</string>
     <string name="invalid_credentials">Credenciales inválidas</string>
+
+    <string name="theme_toggle">Theme</string>
+    <string name="switch_to_dark">Switch to dark</string>
+    <string name="switch_to_light">Switch to light</string>
+    <string name="version_text">Versión 0.5</string>
 </resources>
