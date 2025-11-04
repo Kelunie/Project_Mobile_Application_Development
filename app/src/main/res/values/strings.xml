@@ -58,4 +58,14 @@
     <string name="account_name_required">El nombre es obligatorio</string>
     <string name="account_name_saved">Nombre guardado</string>
     <string name="local_ip_port">%1$s: %2$s:%3$d</string>
+    <string name="disconect">Desconectado</string>
+    <string name="conecting">Conectando... Por favor espere...</string>
+    <string name="dialogPromote">Promover a...</string>
+    <string name="promotionQueen">Reina</string>
+    <string name="promotionKnight">Caballo</string>
+    <string name="promotionRook">Torre</string>
+    <string name="promotionBishop">Alfíl</string>
+    <string name="notConnectTxt">No Conectado</string>
+    <string name="Outofsyncwrongside">Desincronizado, Lado equivocado</string>
+    <string name="Outofsyncillegalmove">Desicronizando, Movimiento Ilegal</string>
 </resources>

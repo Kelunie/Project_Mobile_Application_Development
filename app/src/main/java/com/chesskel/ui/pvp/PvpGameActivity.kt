@@ -94,7 +94,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
                 override fun onPeerLeft(reason: String?) {
                     runOnUiThread {
-                        Toast.makeText(this@PvpGameActivity, reason ?: "Disconnected", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this@PvpGameActivity, reason ?: getString(R.string.disconect), Toast.LENGTH_LONG).show()
                         // Salida ordenada (cierre LAN en background + volver al menú sin bloquear)
                         exitToMenu()
                     }
@@ -180,7 +180,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
             runOnUiThread {
                 // Ensure handshake finished and it's my turn
                 if (mySide == null || lan?.isConnected() != true) {
-                    Toast.makeText(this, "Connecting… please wait", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.conecting), Toast.LENGTH_SHORT).show()
                     return@runOnUiThread
                 }
                 if (!isMyTurn()) {
@@ -219,9 +219,10 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun showPromotionDialog(baseMove: Move) {
-        val labels = arrayOf("Queen", "Knight", "Rook", "Bishop")
+        val labels = arrayOf(getString(R.string.promotionQueen), getString(R.string.promotionKnight),
+            getString(R.string.promotionRook), getString(R.string.promotionBishop))
         AlertDialog.Builder(this)
-            .setTitle("Promote to")
+            .setTitle(getString(R.string.dialogPromote))
             .setItems(labels) { d, which ->
                 val isWhite = engine.pieceAt(baseMove.fromR, baseMove.fromC).isUpperCase()
                 val promoChar = when (which) {
@@ -242,7 +243,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     private fun performMove(m: Move, isLocal: Boolean) {
         val my = mySide
         if (my == null) {
-            Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.notConnectTxt), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -259,14 +260,14 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         } else {
             // Remote move must come from opponent and be legal in current state
             if (mover == '.' || moverIsWhite == iAmWhite) {
-                Toast.makeText(this, "Out of sync (wrong side)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.Outofsyncwrongside), Toast.LENGTH_SHORT).show()
                 return
             }
             val isLegal = engine.legalMovesFor(m.fromR, m.fromC).any {
                 it.fromR == m.fromR && it.fromC == m.fromC && it.toR == m.toR && it.toC == m.toC && it.promotion == m.promotion
             }
             if (!isLegal) {
-                Toast.makeText(this, "Out of sync (illegal move)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.Outofsyncillegalmove), Toast.LENGTH_SHORT).show()
                 return
             }
         }

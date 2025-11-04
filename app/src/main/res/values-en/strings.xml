@@ -58,4 +58,15 @@
     <string name="save">Save</string>
     <string name="account_name_required">Name is required</string>
     <string name="account_name_saved">Name saved</string>
+    <string name="local_ip_port">%1$s: %2$s:%3$d</string>
+    <string name="disconect">Disconnect</string>
+    <string name="conecting">Connecting… please wait</string>
+    <string name="dialogPromote">Promote to...</string>
+    <string name="promotionQueen">Queen</string>
+    <string name="promotionKnight">knight</string>
+    <string name="promotionRook">Rook</string>
+    <string name="promotionBishop">Bishop</string>
+    <string name="notConnectTxt">Not Connected</string>
+    <string name="Outofsyncwrongside">Out of sync wrong side</string>
+    <string name="Outofsyncillegalmove">Out of sync (illegal move)</string>
 </resources>
