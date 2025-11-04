@@ -34,7 +34,7 @@ class PvpLobbyActivity : ComponentActivity() {
         val localIp = LanSession.getLocalIpv4() ?: "-"
         @Suppress("SetTextI18n")
         // Display local IP and port (not localized compound label)
-        tvIp.text = "${getString(R.string.labelIP)}: $localIp:${LanSession.DEFAULT_PORT}"
+        tvIp.text = getString(R.string.local_ip_port, getString(R.string.labelIP), localIp, LanSession.DEFAULT_PORT)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
         list.adapter = adapter
@@ -75,7 +75,7 @@ class PvpLobbyActivity : ComponentActivity() {
 
         joinBtn.setOnClickListener {
             val et = EditText(this).apply {
-                hint = "Host IP (e.g. 192.168.1.10)"
+                hint = getString(R.string.host_ip_hint)
                 inputType = InputType.TYPE_CLASS_PHONE or InputType.TYPE_NUMBER_FLAG_DECIMAL
             }
             AlertDialog.Builder(this)

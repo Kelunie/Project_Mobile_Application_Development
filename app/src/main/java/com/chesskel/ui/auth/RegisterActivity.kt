@@ -29,7 +29,7 @@ class RegisterActivity : ComponentActivity() {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString()
             if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.all_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val id = db.insertUser(
@@ -40,11 +40,11 @@ class RegisterActivity : ComponentActivity() {
             if (id > 0) {
                 getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
                     .edit().putLong("current_user_id", id).apply()
-                Toast.makeText(this, "Account created", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.account_created), Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, MainMenuActivity::class.java))
                 finish()
             } else {
-                Toast.makeText(this, "Email already exists", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.email_exists), Toast.LENGTH_SHORT).show()
             }
         }
 

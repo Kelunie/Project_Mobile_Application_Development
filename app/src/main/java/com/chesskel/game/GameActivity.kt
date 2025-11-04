@@ -148,11 +148,16 @@ class GameActivity : ComponentActivity(), GameEventListener {
     private fun showPromotionDialog(m: Move) {
         val mover = engine.pieceAt(m.fromR, m.fromC)
         val isWhite = mover != '.' && mover.isUpperCase()
-        val labels = arrayOf("Queen", "Knight", "Rook", "Bishop")
+        val labels = arrayOf(
+            getString(R.string.promotionQueen),
+            getString(R.string.promotionKnight),
+            getString(R.string.promotionRook),
+            getString(R.string.promotionBishop)
+        )
         val chars = if (isWhite) arrayOf('Q', 'N', 'R', 'B') else arrayOf('q', 'n', 'r', 'b')
 
         AlertDialog.Builder(this)
-            .setTitle("Choose promotion")
+            .setTitle(getString(R.string.dialogPromote))
             .setItems(labels) { _, which ->
                 val promo = chars[which]
                 val chosen = Move(m.fromR, m.fromC, m.toR, m.toC, promo)
@@ -194,8 +199,8 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         // Game over handling
         if (engine.isCheckmate(opponentIsWhite)) {
-            val winner = if (!opponentIsWhite) "White" else "Black"
-            Toast.makeText(this, "Checkmate! $winner wins", Toast.LENGTH_LONG).show()
+            val winner = if (!opponentIsWhite) getString(R.string.white) else getString(R.string.black)
+            Toast.makeText(this, getString(R.string.checkmate_template, winner), Toast.LENGTH_LONG).show()
             aiBot?.stop()
             showPostGameOptions()
             return
@@ -203,7 +208,7 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         // Stalemate / draw detection: if no legal moves but not in check -> stalemate
         if (engine.allLegalMoves(engine.whiteToMove).isEmpty() && !engine.isKingInCheck(engine.whiteToMove)) {
-            Toast.makeText(this, "Stalemate", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.stalemate), Toast.LENGTH_LONG).show()
             aiBot?.stop()
             showPostGameOptions()
             return

@@ -68,4 +68,19 @@
     <string name="notConnectTxt">No Conectado</string>
     <string name="Outofsyncwrongside">Desincronizado, Lado equivocado</string>
     <string name="Outofsyncillegalmove">Desicronizando, Movimiento Ilegal</string>
+
+    <!-- Added Spanish translations for newly referenced strings -->
+    <string name="checkmate_template">¡Jaque mate! %1$s gana</string>
+    <string name="send_failed_fmt">Error al enviar: %1$s</string>
+    <string name="peer_not_connected">Oponente no conectado</string>
+    <string name="profile_todo">Perfil (Pendiente)</string>
+    <string name="mode_selected_fmt">%1$s seleccionado</string>
+    <string name="all_fields_required">Todos los campos son obligatorios</string>
+    <string name="account_created">Cuenta creada</string>
+    <string name="email_exists">El correo ya existe</string>
+    <string name="host_ip_hint">IP del host (ej. 192.168.1.10)</string>
+    <string name="elo_range_easy">0 - 450 ELO</string>
+    <string name="elo_range_normal">550 - 800 ELO</string>
+    <string name="elo_range_hard">900 - 1200 ELO</string>
+    <string name="elo_range_pro">1300+ ELO</string>
 </resources>

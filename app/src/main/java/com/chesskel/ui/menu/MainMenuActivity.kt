@@ -28,7 +28,7 @@ class MainMenuActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.btnProfile).setOnClickListener {
-            Toast.makeText(this, "Profile (TODO)", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.profile_todo), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -43,7 +43,7 @@ class MainMenuActivity : ComponentActivity() {
         val modePro = dialogView.findViewById<LinearLayout>(R.id.mode_pro)
 
         fun select(mode: AiMode) {
-            Toast.makeText(applicationContext, "${mode.label} selected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(applicationContext, getString(R.string.mode_selected_fmt, mode.label), Toast.LENGTH_SHORT).show()
             // Instead of immediately starting the game, ask the player which color they want to play.
             showAiColorChoice(mode)
             dialog.dismiss()

@@ -295,10 +295,10 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         if (isLocal) {
             if (lan?.isConnected() == true) {
                 try { lan?.sendMove(m.fromR, m.fromC, m.toR, m.toC, m.promotion) } catch (e: Exception) {
-                    Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.send_failed_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
                 }
             } else {
-                Toast.makeText(this, "Peer not connected yet", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.peer_not_connected), Toast.LENGTH_SHORT).show()
             }
         }
 
