@@ -50,6 +50,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         tvMoves = findViewById(R.id.tvMoves)
         btnResign = findViewById(R.id.btnResign)
 
+        // Asegurar rotación 180° cuando jugamos con negras (visual y toques)
+        chessBoard.rotateForBlack = true
+
         engine.eventListener = this
         chessBoard.bindEngine(engine)
 
@@ -71,7 +74,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 override fun onConnected(peerIp: String, iPlayWhite: Boolean) {
                     runOnUiThread {
                         mySide = if (iPlayWhite) Side.WHITE else Side.BLACK
-                        // Tell the board which side the human controls
+                        // Tell the board which side the human controls -> fija perspectiva
                         chessBoard.humanIsWhite = iPlayWhite
                         val sideTxt = if (iPlayWhite) getString(R.string.white) else getString(R.string.black)
                         // Show peer name if available, otherwise show IP
@@ -400,7 +403,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         movesList.clear()
         chessBoard.lastMove = null
         engine.reset()
-        // Keep same sides as negotiated initially; board side is already set
+        // Keep same sides as negotiated initially; board side is already set via chessBoard.humanIsWhite
         chessBoard.invalidate()
         tvMoves.text = ""
         refreshUi()
@@ -421,7 +424,6 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         }
         runOnUiThread { showGameOverDialog(msg) }
     }
-
 
     // Keep session alive unless Activity is destroyed
     override fun onDestroy() {
