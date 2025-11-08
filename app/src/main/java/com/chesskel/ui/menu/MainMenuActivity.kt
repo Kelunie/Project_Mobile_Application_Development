@@ -8,10 +8,11 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import com.chesskel.R
 import com.chesskel.game.AiMode
 import com.chesskel.ui.pvp.PvpLobbyActivity
+import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.game.GameActivity
 
 class MainMenuActivity : AppCompatActivity() {
 
@@ -20,9 +21,8 @@ class MainMenuActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Aplica el modo guardado a ESTA Activity antes de inflar vistas
-        val savedDark = prefs.getBoolean("dark_mode", true)
-        delegate.localNightMode = if (savedDark) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        // Apply saved theme globally BEFORE inflating layout
+        ThemeUtils.applySavedTheme(this)
 
         setContentView(R.layout.activity_main_menu)
 
@@ -42,13 +42,7 @@ class MainMenuActivity : AppCompatActivity() {
         syncThemeToggleIcon(btnTheme)
 
         btnTheme.setOnClickListener {
-            val currentlyDark = isDarkMode()
-            val newMode = if (currentlyDark) AppCompatDelegate.MODE_NIGHT_NO else AppCompatDelegate.MODE_NIGHT_YES
-            // Guarda preferencia
-            prefs.edit().putBoolean("dark_mode", newMode == AppCompatDelegate.MODE_NIGHT_YES).apply()
-            // Aplica a esta Activity; AppCompat recrea automáticamente si es necesario
-            delegate.localNightMode = newMode
-            // Actualiza icono inmediatamente
+            val newDark = ThemeUtils.toggleAndPersist(this)
             syncThemeToggleIcon(btnTheme)
         }
 
@@ -59,15 +53,8 @@ class MainMenuActivity : AppCompatActivity() {
         tvVersion.text = getString(R.string.version_text, "1.0")
     }
 
-    private fun isDarkMode(): Boolean = when (delegate.localNightMode) {
-        AppCompatDelegate.MODE_NIGHT_YES -> true
-        AppCompatDelegate.MODE_NIGHT_NO -> false
-        else -> (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
-                android.content.res.Configuration.UI_MODE_NIGHT_YES
-    }
-
     private fun syncThemeToggleIcon(btn: ImageButton) {
-        val dark = isDarkMode()
+        val dark = ThemeUtils.isDarkMode(this)
         btn.setImageResource(if (dark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode)
         btn.contentDescription = if (dark) getString(R.string.switch_to_light) else getString(R.string.switch_to_dark)
     }

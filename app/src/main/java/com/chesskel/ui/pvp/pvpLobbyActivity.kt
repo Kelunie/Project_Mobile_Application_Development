@@ -6,12 +6,13 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.widget.*
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.net.LanSession
 import com.chesskel.net.UdpDiscovery
+import com.chesskel.ui.theme.ThemeUtils
 
-class PvpLobbyActivity : ComponentActivity() {
+class PvpLobbyActivity : AppCompatActivity() {
 
     private var scanner: UdpDiscovery.ClientScanner? = null
     private val hosts = mutableListOf<UdpDiscovery.HostInfo>()
@@ -22,6 +23,7 @@ class PvpLobbyActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_pvp_lobby)
 
         val tvIp = findViewById<TextView>(R.id.tvLocalIp)

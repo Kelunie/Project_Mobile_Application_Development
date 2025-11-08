@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.AiBot
 import com.chesskel.game.AiMode
@@ -18,9 +18,10 @@ import com.chesskel.game.GameEventListener
 import com.chesskel.game.GameResult
 import com.chesskel.game.Move
 import com.chesskel.game.Side
+import com.chesskel.ui.theme.ThemeUtils
 import com.chesskel.util.SoundManager
 
-class GameActivity : ComponentActivity(), GameEventListener {
+class GameActivity : AppCompatActivity(), GameEventListener {
 
     private val engine = ChessEngine()
     private var aiBot: AiBot? = null
@@ -48,6 +49,7 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_game)
 
         // Initialize SoundManager once for the entire activity.
