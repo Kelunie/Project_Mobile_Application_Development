@@ -32,6 +32,7 @@
                 android:id="@+id/tvMoves"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:fontFamily="monospace"
                 android:text=""
                 android:textSize="14sp"
                 android:padding="4dp" />
