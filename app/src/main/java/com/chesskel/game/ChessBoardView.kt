@@ -9,6 +9,7 @@ import android.view.View
 import com.chesskel.game.ChessEngine
 import com.chesskel.game.Move
 import com.chesskel.util.SoundManager
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -70,6 +71,17 @@ class ChessBoardView @JvmOverloads constructor(
 
     private var selR = -1; private var selC = -1
     private var possibleMoves: List<Move> = emptyList()
+
+    // --- State for Drag & Drop ---
+    private var isDragging = false
+    private var draggedPiece: Char = '.'
+    private var dragX = 0f
+    private var dragY = 0f
+    private var dragStartR = -1
+    private var dragStartC = -1
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+    private val dragThreshold by lazy { dp(10f) } // Minimum distance to start a drag
 
     // último movimiento
     var lastMove: Move? = null
@@ -190,6 +202,9 @@ class ChessBoardView @JvmOverloads constructor(
 
         // 4) Piezas
         for (r in 0..7) for (c in 0..7) {
+            // Do not draw the piece being dragged from its original square
+            if (isDragging && r == dragStartR && c == dragStartC) continue
+
             val p = engine.pieceAt(r, c)
             if (p == '.') continue
             val resName = if (p.isUpperCase()) "white_" + pieceName(p.lowercaseChar()) else "black_" + pieceName(p)
@@ -212,7 +227,15 @@ class ChessBoardView @JvmOverloads constructor(
             }
         }
 
-        // 5) Coordenadas (letras abajo, números a la izquierda)
+        // 5) Dragged piece (drawn on top of everything else)
+        if (isDragging && draggedPiece != '.') {
+            val bmp = getBitmapForPiece(if (draggedPiece.isUpperCase()) "white_${pieceName(draggedPiece.lowercaseChar())}" else "black_${pieceName(draggedPiece)}")
+            if (bmp != null && !bmp.isRecycled) {
+                canvas.drawBitmap(bmp, dragX - squareSize / 2, dragY - squareSize / 2, null)
+            }
+        }
+
+        // 6) Coordenadas (letras abajo, números a la izquierda)
         if (showCoordinates && labelBand > 0f) {
             drawCoordinates(canvas)
         }
@@ -277,47 +300,138 @@ class ChessBoardView @JvmOverloads constructor(
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val engine = engine ?: return false
-        if (event.action != MotionEvent.ACTION_DOWN) return false
         if (squareSize <= 0f) return false
 
-        // Solo permitir cuando es el turno del humano
-        if (engine.whiteToMove != humanIsWhite) return false
+        // Only allow interaction on the human's turn
+        if (engine.whiteToMove != humanIsWhite) {
+            if (selR != -1 || isDragging) {
+                resetSelection()
+                invalidate()
+            }
+            return false
+        }
 
-        // Limitar a zona del tablero (excluyendo bandas)
         val relX = event.x - boardOriginX
         val relY = event.y - boardOriginY
-        if (relX < 0f || relY < 0f || relX >= boardSide || relY >= boardSide) return false
 
+        // Check if touch is outside the board area
+        if (relX < 0f || relY < 0f || relX >= boardSide || relY >= boardSide) {
+            // If dragging and dropped outside, cancel the drag
+            if (isDragging) {
+                resetSelection()
+                invalidate()
+            }
+            return false // Ignore touches outside the board
+        }
+
+        // Convert touch coordinates to board coordinates
         val vc = (relX / squareSize).toInt().coerceIn(0, 7)
         val vr = (relY / squareSize).toInt().coerceIn(0, 7)
         val (r, c) = toBoard(vr, vc)
-        val piece = engine.pieceAt(r, c)
 
-        // Deselección
-        if (selR == r && selC == c) {
-            selR = -1; selC = -1; possibleMoves = emptyList()
-            invalidate()
-            return true
-        }
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                // Always return true here to receive subsequent MOVE and UP events
+                val piece = engine.pieceAt(r, c)
+                if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
+                    // A piece owned by the player was touched. Prepare for a potential drag or click.
+                    dragStartR = r
+                    dragStartC = c
+                    draggedPiece = piece
+                    touchDownX = event.x
+                    touchDownY = event.y
+                    dragX = event.x
+                    dragY = event.y
+                } else {
+                    // Touched an empty square or opponent piece
+                    dragStartR = -1 // Ensure we don't start a drag
+                }
+                return true
+            }
 
-        // Selección de pieza propia
-        if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
-            selR = r; selC = c
-            possibleMoves = engine.legalMovesFor(r, c)
-            try { SoundManager.playSelect() } catch (_: Exception) {}
-            invalidate()
-            return true
-        }
+            MotionEvent.ACTION_MOVE -> {
+                if (dragStartR != -1 && !isDragging) {
+                    val dx = abs(event.x - touchDownX)
+                    val dy = abs(event.y - touchDownY)
+                    if (dx > dragThreshold || dy > dragThreshold) {
+                        // Threshold passed, convert this gesture into a drag
+                        isDragging = true
+                        // Set the selection to the drag start square
+                        selR = dragStartR
+                        selC = dragStartC
+                        possibleMoves = engine.legalMovesFor(selR, selC)
+                        try { SoundManager.playSelect() } catch (_: Exception) {}
+                    }
+                }
 
-        // Intentar mover
-        if (selR >= 0) {
-            val match = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
-            if (match != null) onMove?.invoke(match)
-            selR = -1; selC = -1; possibleMoves = emptyList()
-            invalidate()
-            return true
+                if (isDragging) {
+                    dragX = event.x
+                    dragY = event.y
+                    invalidate()
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+                if (isDragging) {
+                    // --- Handle Drop ---
+                    val move = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
+                    if (move != null) {
+                        onMove?.invoke(move)
+                    }
+                    // Reset everything after the drag is complete
+                    resetSelection()
+                } else {
+                    // --- Handle Click ---
+                    if (selR == -1 && dragStartR != -1) {
+                        // This was a tap on a valid piece to select it for the first time
+                        selR = dragStartR
+                        selC = dragStartC
+                        possibleMoves = engine.legalMovesFor(selR, selC)
+                        try { SoundManager.playSelect() } catch (_: Exception) {}
+                    } else if (selR != -1) {
+                        // A piece was already selected, now decide what to do with this new tap
+                        val move = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
+                        if (move != null) {
+                            // Tapped on a valid destination -> make the move
+                            onMove?.invoke(move)
+                            resetSelection()
+                        } else {
+                            val piece = engine.pieceAt(r, c)
+                            if (r == selR && c == selC) {
+                                // Tapped the same selected piece again -> deselect
+                                resetSelection()
+                            } else if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
+                                // Tapped another of our pieces -> switch selection
+                                selR = r
+                                selC = c
+                                possibleMoves = engine.legalMovesFor(r, c)
+                                try { SoundManager.playSelect() } catch (_: Exception) {}
+                            } else {
+                                // Tapped an empty square or opponent piece that isn't a valid move -> deselect
+                                resetSelection()
+                            }
+                        }
+                    } else {
+                        // Tapped on an empty square or opponent piece with nothing selected
+                        resetSelection()
+                    }
+                }
+                invalidate()
+                return true
+            }
         }
-        return true
+        return false
+    }
+
+    private fun resetSelection() {
+        isDragging = false
+        selR = -1
+        selC = -1
+        dragStartR = -1
+        dragStartC = -1
+        draggedPiece = '.'
+        possibleMoves = emptyList()
     }
 
     override fun onDetachedFromWindow() {
