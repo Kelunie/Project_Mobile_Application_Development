@@ -37,13 +37,12 @@
                         android:background="@drawable/bg_icon_glow" />
 
                     <ImageView
-                        android:id="@+id/ivSkull"
+                        android:id="@+id/ivAppIcon"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:background="@drawable/bg_icon_tile"
-                        android:padding="18dp"
                         android:scaleType="centerInside"
-                        android:src="@drawable/ic_launcher_foreground" />
+                        android:src="@drawable/ic_main_menu" />
                 </FrameLayout>
 
                 <TextView
