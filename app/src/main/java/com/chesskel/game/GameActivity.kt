@@ -9,7 +9,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.AiBot
 import com.chesskel.game.AiMode
@@ -18,9 +18,10 @@ import com.chesskel.game.GameEventListener
 import com.chesskel.game.GameResult
 import com.chesskel.game.Move
 import com.chesskel.game.Side
+import com.chesskel.ui.theme.ThemeUtils
 import com.chesskel.util.SoundManager
 
-class GameActivity : ComponentActivity(), GameEventListener {
+class GameActivity : AppCompatActivity(), GameEventListener {
 
     private val engine = ChessEngine()
     private var aiBot: AiBot? = null
@@ -48,6 +49,7 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_game)
 
         // Initialize SoundManager once for the entire activity.
@@ -148,11 +150,16 @@ class GameActivity : ComponentActivity(), GameEventListener {
     private fun showPromotionDialog(m: Move) {
         val mover = engine.pieceAt(m.fromR, m.fromC)
         val isWhite = mover != '.' && mover.isUpperCase()
-        val labels = arrayOf("Queen", "Knight", "Rook", "Bishop")
+        val labels = arrayOf(
+            getString(R.string.promotionQueen),
+            getString(R.string.promotionKnight),
+            getString(R.string.promotionRook),
+            getString(R.string.promotionBishop)
+        )
         val chars = if (isWhite) arrayOf('Q', 'N', 'R', 'B') else arrayOf('q', 'n', 'r', 'b')
 
         AlertDialog.Builder(this)
-            .setTitle("Choose promotion")
+            .setTitle(getString(R.string.dialogPromote))
             .setItems(labels) { _, which ->
                 val promo = chars[which]
                 val chosen = Move(m.fromR, m.fromC, m.toR, m.toC, promo)
@@ -194,8 +201,8 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         // Game over handling
         if (engine.isCheckmate(opponentIsWhite)) {
-            val winner = if (!opponentIsWhite) "White" else "Black"
-            Toast.makeText(this, "Checkmate! $winner wins", Toast.LENGTH_LONG).show()
+            val winner = if (!opponentIsWhite) getString(R.string.white) else getString(R.string.black)
+            Toast.makeText(this, getString(R.string.checkmate_template, winner), Toast.LENGTH_LONG).show()
             aiBot?.stop()
             showPostGameOptions()
             return
@@ -203,7 +210,7 @@ class GameActivity : ComponentActivity(), GameEventListener {
 
         // Stalemate / draw detection: if no legal moves but not in check -> stalemate
         if (engine.allLegalMoves(engine.whiteToMove).isEmpty() && !engine.isKingInCheck(engine.whiteToMove)) {
-            Toast.makeText(this, "Stalemate", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.stalemate), Toast.LENGTH_LONG).show()
             aiBot?.stop()
             showPostGameOptions()
             return
@@ -222,15 +229,16 @@ class GameActivity : ComponentActivity(), GameEventListener {
         var moveNumber = 1
         var i = 0
         while (i < movesList.size) {
-            sb.append("${moveNumber}. ")
-            sb.append(movesList[i])
-            i++
-            if (i < movesList.size) {
-                sb.append("    ")
-                sb.append(movesList[i])
-                i++
-            }
-            sb.append("\n")
+            val whiteMove = movesList[i]
+            val blackMove = if (i + 1 < movesList.size) movesList[i + 1] else ""
+
+            // Formato de tabla: "%-5s %-8s %s"
+            // Col 1: Número de jugada (5 caracteres, alineado a la izquierda)
+            // Col 2: Movimiento de blancas (8 caracteres, alineado a la izquierda)
+            // Col 3: Movimiento de negras (el resto del espacio)
+            sb.append("%-5s%-8s%s\n".format("${moveNumber}.", whiteMove, blackMove))
+
+            i += 2
             moveNumber++
         }
         tvMoves.text = sb.toString()

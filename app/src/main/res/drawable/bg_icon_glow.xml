@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resplandor rojo suave detrás del icono -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="oval">
+    <size android:width="96dp" android:height="96dp"/>
+    <gradient
+        android:type="radial"
+        android:gradientRadius="72dp"
+        android:centerColor="@color/glow_start"
+        android:startColor="@color/glow_start"
+        android:endColor="@color/glow_end"/>
+</shape>

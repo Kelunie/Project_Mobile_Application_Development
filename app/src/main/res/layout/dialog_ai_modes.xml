@@ -28,7 +28,7 @@
             android:clickable="true"
             android:focusable="true">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/AiModeEasy" android:textSize="16sp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="0 - 450 ELO" android:textSize="12sp" android:textColor="#888888"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/elo_range_easy" android:textSize="12sp" android:textColor="#888888"/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="8dp"/>
@@ -43,7 +43,7 @@
             android:clickable="true"
             android:focusable="true">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/AiModeNormal" android:textSize="16sp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="550 - 800 ELO" android:textSize="12sp" android:textColor="#888888"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/elo_range_normal" android:textSize="12sp" android:textColor="#888888"/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="8dp"/>
@@ -58,7 +58,7 @@
             android:clickable="true"
             android:focusable="true">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/AiModeHard" android:textSize="16sp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="950 - 1350 ELO" android:textSize="12sp" android:textColor="#888888"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/elo_range_hard" android:textSize="12sp" android:textColor="#888888"/>
         </LinearLayout>
 
         <View android:layout_width="match_parent" android:layout_height="8dp"/>
@@ -73,7 +73,7 @@
             android:clickable="true"
             android:focusable="true">
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/AiModePro" android:textSize="16sp" />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="1500 - 2000 ELO" android:textSize="12sp" android:textColor="#888888"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/elo_range_pro" android:textSize="12sp" android:textColor="#888888"/>
         </LinearLayout>
 
     </LinearLayout>

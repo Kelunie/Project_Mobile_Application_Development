@@ -1,4 +1,3 @@
-// kotlin
 package com.chesskel.ui.game
 
 import android.content.Context
@@ -10,32 +9,84 @@ import android.view.View
 import com.chesskel.game.ChessEngine
 import com.chesskel.game.Move
 import com.chesskel.util.SoundManager
+import kotlin.math.abs
+import kotlin.math.max
+import kotlin.math.min
 
 class ChessBoardView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null
 ) : View(context, attrs) {
 
+    // Colores tablero y resaltados
     private val lightColor = Color.parseColor("#F0D9B5")
     private val darkColor = Color.parseColor("#B58863")
     private val highlightColor = Color.parseColor("#6fa8dc")
-    private val lastMoveFromColor = Color.argb(160, 0, 200, 0) // translucent green
-    private val lastMoveToColor = Color.argb(160, 200, 200, 0) // translucent yellow
+    private val lastMoveFromColor = Color.argb(160, 0, 200, 0)   // verde translúcido
+    private val lastMoveToColor   = Color.argb(160, 200, 200, 0) // amarillo translúcido
+
+    // Coordenadas (letras/números)
+    var showCoordinates: Boolean = true
+        set(v) { field = v; requestLayout(); invalidate() }
+    private val coordColor = Color.parseColor("#333333")
+    private val coordShadow = Color.parseColor("#FFFFFF")
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = coordColor
+        textAlign = Paint.Align.CENTER
+        isSubpixelText = true
+    }
+
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private var squareSize = 0f
+
+    // Tamaños y origen del tablero dentro del View
+    private var viewSize = 0f
+    private var labelBand = 0f       // banda para números (izq) y letras (abajo)
+    private var boardSide = 0f       // lado del tablero (sin bandas)
+    private var boardOriginX = 0f    // origen X del tablero (después de banda izquierda)
+    private var boardOriginY = 0f    // origen Y del tablero (arriba; la banda está abajo)
+    private var squareSize = 0f      // tamaño de casilla (boardSide/8)
 
     private var engine: ChessEngine? = null
     var onMove: ((Move) -> Unit)? = null
 
-    // New: which color the human controls (true = White, false = Black)
+    // Perspectiva: true=controlás Blancas, false=Negras (se invierte si rotateForBlack)
     var humanIsWhite: Boolean = true
+        set(value) {
+            field = value
+            updatePerspective()
+        }
+
+    // Si es true y jugás con negras, rota 180° (visual y toques)
+    var rotateForBlack: Boolean = true
+        set(value) {
+            field = value
+            updatePerspective()
+        }
+
+    // ¿Blancas abajo en pantalla?
+    private var whiteAtBottom: Boolean = true
+    private fun updatePerspective() {
+        whiteAtBottom = if (rotateForBlack) humanIsWhite else true
+        invalidate()
+    }
 
     private var selR = -1; private var selC = -1
     private var possibleMoves: List<Move> = emptyList()
 
-    // store last move to highlight on board (optional)
+    // --- State for Drag & Drop ---
+    private var isDragging = false
+    private var draggedPiece: Char = '.'
+    private var dragX = 0f
+    private var dragY = 0f
+    private var dragStartR = -1
+    private var dragStartC = -1
+    private var touchDownX = 0f
+    private var touchDownY = 0f
+    private val dragThreshold by lazy { dp(10f) } // Minimum distance to start a drag
+
+    // último movimiento
     var lastMove: Move? = null
 
-    // cache scaled piece bitmaps by resource id
+    // cache de bitmaps escalados
     private val pieceCache = mutableMapOf<Int, Bitmap>()
 
     fun bindEngine(e: ChessEngine) {
@@ -50,10 +101,25 @@ class ChessBoardView @JvmOverloads constructor(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
-        // set squareSize here so touches are safe before first onDraw
-        squareSize = if (w > 0) w / 8f else 0f
+        // lado del View (cuadrado)
+        viewSize = min(w, h).toFloat()
 
-        // if size changed, clear and recycle cache to recreate scaled bitmaps
+        // banda para coordenadas: 8.5% del lado, acotada entre 16dp y 32dp
+        val minBand = dp(16f)
+        val maxBand = dp(32f)
+        labelBand = if (showCoordinates) (viewSize * 0.085f).coerceIn(minBand, maxBand) else 0f
+
+        // el tablero ocupa el resto
+        boardSide = (viewSize - labelBand).coerceAtLeast(0f)
+        boardOriginX = labelBand
+        boardOriginY = 0f
+        squareSize = if (boardSide > 0f) boardSide / 8f else 0f
+
+        // ajustar tamaño de fuente
+        textPaint.textSize = (labelBand * 0.55f).coerceAtLeast(dp(10f))
+        textPaint.setShadowLayer(2f, 0f, 0f, coordShadow)
+
+        // si cambió el tamaño, reciclar cache
         if (w != oldw || h != oldh) {
             pieceCache.values.forEach { if (!it.isRecycled) it.recycle() }
             pieceCache.clear()
@@ -63,44 +129,60 @@ class ChessBoardView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val engine = engine ?: return
-        // ensure squareSize is valid (fallback)
-        if (squareSize == 0f) squareSize = width / 8f
+        if (squareSize <= 0f) return
 
-        // draw squares
-        for (r in 0..7) for (c in 0..7) {
-            val left = c * squareSize
-            val top = r * squareSize
+        // 1) Tablero (según perspectiva)
+        for (vr in 0..7) for (vc in 0..7) {
+            val (r, c) = toBoard(vr, vc)
+            val left = boardOriginX + vc * squareSize
+            val top  = boardOriginY + vr * squareSize
             paint.style = Paint.Style.FILL
             paint.color = if ((r + c) % 2 == 0) lightColor else darkColor
             canvas.drawRect(left, top, left + squareSize, top + squareSize, paint)
         }
 
-        // highlight last move from/to if available (draw under pieces)
+        // 2) Último movimiento (debajo de piezas)
         lastMove?.let { lm ->
-            // from-square
             paint.style = Paint.Style.FILL
+            val (vfr, vfc) = toVisual(lm.fromR, lm.fromC)
             paint.color = lastMoveFromColor
-            canvas.drawRect(lm.fromC * squareSize, lm.fromR * squareSize, (lm.fromC + 1) * squareSize, (lm.fromR + 1) * squareSize, paint)
-            // to-square (draw a different color on top)
+            canvas.drawRect(
+                boardOriginX + vfc * squareSize,
+                boardOriginY + vfr * squareSize,
+                boardOriginX + (vfc + 1) * squareSize,
+                boardOriginY + (vfr + 1) * squareSize,
+                paint
+            )
+            val (vtr, vtc) = toVisual(lm.toR, lm.toC)
             paint.color = lastMoveToColor
-            canvas.drawRect(lm.toC * squareSize, lm.toR * squareSize, (lm.toC + 1) * squareSize, (lm.toR + 1) * squareSize, paint)
-            paint.alpha = 255
+            canvas.drawRect(
+                boardOriginX + vtc * squareSize,
+                boardOriginY + vtr * squareSize,
+                boardOriginX + (vtc + 1) * squareSize,
+                boardOriginY + (vtr + 1) * squareSize,
+                paint
+            )
         }
 
-        // highlight selection square (draw over last-move highlight to make selection visible)
+        // 3) Selección + destinos
         if (selR >= 0 && selC >= 0) {
+            val (vsr, vsc) = toVisual(selR, selC)
             paint.color = highlightColor
             paint.alpha = 120
             paint.style = Paint.Style.FILL
-            canvas.drawRect(selC * squareSize, selR * squareSize, (selC + 1) * squareSize, (selR + 1) * squareSize, paint)
+            canvas.drawRect(
+                boardOriginX + vsc * squareSize,
+                boardOriginY + vsr * squareSize,
+                boardOriginX + (vsc + 1) * squareSize,
+                boardOriginY + (vsr + 1) * squareSize,
+                paint
+            )
             paint.alpha = 255
-        }
 
-        // draw move indicators: capture = ring, quiet = small dot
-        if (selR >= 0 && selC >= 0) {
             for (m in possibleMoves) {
-                val cx = (m.toC + 0.5f) * squareSize
-                val cy = (m.toR + 0.5f) * squareSize
+                val (tr, tc) = toVisual(m.toR, m.toC)
+                val cx = boardOriginX + (tc + 0.5f) * squareSize
+                val cy = boardOriginY + (tr + 0.5f) * squareSize
                 val isCapture = engine.pieceAt(m.toR, m.toC) != '.'
 
                 if (isCapture) {
@@ -114,38 +196,83 @@ class ChessBoardView @JvmOverloads constructor(
                     canvas.drawCircle(cx, cy, squareSize * 0.12f, paint)
                 }
             }
-            paint.alpha = 255
             paint.style = Paint.Style.FILL
+            paint.alpha = 255
         }
 
-        // draw pieces (use cached, pre-scaled bitmaps when available)
+        // 4) Piezas
         for (r in 0..7) for (c in 0..7) {
+            // Do not draw the piece being dragged from its original square
+            if (isDragging && r == dragStartR && c == dragStartC) continue
+
             val p = engine.pieceAt(r, c)
             if (p == '.') continue
             val resName = if (p.isUpperCase()) "white_" + pieceName(p.lowercaseChar()) else "black_" + pieceName(p)
             val bmp = getBitmapForPiece(resName)
+            val (vr, vc) = toVisual(r, c)
+            val left = boardOriginX + vc * squareSize
+            val top  = boardOriginY + vr * squareSize
             if (bmp != null && !bmp.isRecycled) {
-                // draw pre-scaled bitmap at board cell
-                canvas.drawBitmap(bmp, c * squareSize, r * squareSize, null)
+                canvas.drawBitmap(bmp, left, top, null)
             } else {
                 paint.color = if (p.isUpperCase()) Color.WHITE else Color.BLACK
                 paint.textSize = squareSize * 0.5f
                 paint.style = Paint.Style.FILL
-
-                // center text in the square
                 paint.textAlign = Paint.Align.CENTER
-                // compute center coordinates
-                val cx = c * squareSize + squareSize * 0.5f
-                // vertical center using font metrics
+                val cx = left + squareSize * 0.5f
                 val fm = paint.fontMetrics
-                val cy = r * squareSize + squareSize * 0.5f - (fm.ascent + fm.descent) / 2f
-
+                val cy = top + squareSize * 0.5f - (fm.ascent + fm.descent) / 2f
                 canvas.drawText(p.toString(), cx, cy, paint)
-
-                // restore default alignment if needed elsewhere
                 paint.textAlign = Paint.Align.LEFT
             }
         }
+
+        // 5) Dragged piece (drawn on top of everything else)
+        if (isDragging && draggedPiece != '.') {
+            val bmp = getBitmapForPiece(if (draggedPiece.isUpperCase()) "white_${pieceName(draggedPiece.lowercaseChar())}" else "black_${pieceName(draggedPiece)}")
+            if (bmp != null && !bmp.isRecycled) {
+                canvas.drawBitmap(bmp, dragX - squareSize / 2, dragY - squareSize / 2, null)
+            }
+        }
+
+        // 6) Coordenadas (letras abajo, números a la izquierda)
+        if (showCoordinates && labelBand > 0f) {
+            drawCoordinates(canvas)
+        }
+    }
+
+    private fun drawCoordinates(canvas: Canvas) {
+        // Fondo suave para bandas (opcional)
+        paint.style = Paint.Style.FILL
+        paint.color = Color.argb(32, 0, 0, 0)
+        // banda izquierda (números)
+        canvas.drawRect(0f, 0f, labelBand, boardSide, paint)
+        // banda inferior (letras)
+        canvas.drawRect(labelBand, boardSide, labelBand + boardSide, labelBand + boardSide, paint)
+
+        // Letras abajo
+        val files: List<Char> =
+            if (whiteAtBottom) ('a'..'h').toList()
+            else ('h' downTo 'a').toList()
+
+        val baseY = boardOriginY + boardSide + (labelBand * 0.70f)
+        for (c in 0..7) {
+            val cx = boardOriginX + (c + 0.5f) * squareSize
+            canvas.drawText(files[c].toString(), cx, baseY, textPaint)
+        }
+
+        // Números a la izquierda
+        for (r in 0..7) {
+            val centerY = boardOriginY + (r + 0.5f) * squareSize
+            val label = if (whiteAtBottom) (8 - r) else (r + 1)
+            val x = boardOriginX - labelBand * 0.50f
+            canvas.drawText(label.toString(), x, centerY + textCenteringOffset(), textPaint)
+        }
+    }
+
+    private fun textCenteringOffset(): Float {
+        val fm = textPaint.fontMetrics
+        return - (fm.ascent + fm.descent) / 2f
     }
 
     private fun pieceName(c: Char) = when (c) {
@@ -163,67 +290,162 @@ class ChessBoardView @JvmOverloads constructor(
         if (id == 0) return null
         pieceCache[id]?.let { return it }
 
-        // decode and scale to current squareSize
         val src = BitmapFactory.decodeResource(resources, id) ?: return null
         val size = squareSize.toInt().coerceAtLeast(1)
         val scaled = Bitmap.createScaledBitmap(src, size, size, true)
-        // recycle original to avoid leaks
-        if (!src.isRecycled && src !== scaled) {
-            src.recycle()
-        }
+        if (!src.isRecycled && src !== scaled) src.recycle()
         pieceCache[id] = scaled
         return scaled
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val engine = engine ?: return false
-        if (event.action != MotionEvent.ACTION_DOWN) return false
-        if (squareSize == 0f) squareSize = width / 8f
+        if (squareSize <= 0f) return false
 
-        // New: ignore input when it's not the human's turn
-        if (engine.whiteToMove != humanIsWhite) return false
-
-        val c = (event.x / squareSize).toInt().coerceIn(0, 7)
-        val r = (event.y / squareSize).toInt().coerceIn(0, 7)
-        val piece = engine.pieceAt(r, c)
-
-        // if tapping the already selected square -> deselect
-        if (selR == r && selC == c) {
-            selR = -1; selC = -1; possibleMoves = emptyList()
-            invalidate()
-            return true
-        }
-
-        // select human's piece only, and only on human's turn
-        if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
-            selR = r; selC = c
-            possibleMoves = engine.legalMovesFor(r, c)
-
-            // play selection sound
-            try { SoundManager.playSelect() } catch (_: Exception) { /* safe guard */ }
-
-            invalidate()
-            return true
-        }
-
-        // if square is a possible move, send move
-        if (selR >= 0) {
-            val match = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
-            if (match != null) {
-                onMove?.invoke(match)
+        // Only allow interaction on the human's turn
+        if (engine.whiteToMove != humanIsWhite) {
+            if (selR != -1 || isDragging) {
+                resetSelection()
+                invalidate()
             }
-            // clear selection
-            selR = -1; selC = -1; possibleMoves = emptyList()
-            invalidate()
-            return true
+            return false
         }
-        return true
+
+        val relX = event.x - boardOriginX
+        val relY = event.y - boardOriginY
+
+        // Check if touch is outside the board area
+        if (relX < 0f || relY < 0f || relX >= boardSide || relY >= boardSide) {
+            // If dragging and dropped outside, cancel the drag
+            if (isDragging) {
+                resetSelection()
+                invalidate()
+            }
+            return false // Ignore touches outside the board
+        }
+
+        // Convert touch coordinates to board coordinates
+        val vc = (relX / squareSize).toInt().coerceIn(0, 7)
+        val vr = (relY / squareSize).toInt().coerceIn(0, 7)
+        val (r, c) = toBoard(vr, vc)
+
+        when (event.action) {
+            MotionEvent.ACTION_DOWN -> {
+                // Always return true here to receive subsequent MOVE and UP events
+                val piece = engine.pieceAt(r, c)
+                if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
+                    // A piece owned by the player was touched. Prepare for a potential drag or click.
+                    dragStartR = r
+                    dragStartC = c
+                    draggedPiece = piece
+                    touchDownX = event.x
+                    touchDownY = event.y
+                    dragX = event.x
+                    dragY = event.y
+                } else {
+                    // Touched an empty square or opponent piece
+                    dragStartR = -1 // Ensure we don't start a drag
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                if (dragStartR != -1 && !isDragging) {
+                    val dx = abs(event.x - touchDownX)
+                    val dy = abs(event.y - touchDownY)
+                    if (dx > dragThreshold || dy > dragThreshold) {
+                        // Threshold passed, convert this gesture into a drag
+                        isDragging = true
+                        // Set the selection to the drag start square
+                        selR = dragStartR
+                        selC = dragStartC
+                        possibleMoves = engine.legalMovesFor(selR, selC)
+                        try { SoundManager.playSelect() } catch (_: Exception) {}
+                    }
+                }
+
+                if (isDragging) {
+                    dragX = event.x
+                    dragY = event.y
+                    invalidate()
+                }
+                return true
+            }
+
+            MotionEvent.ACTION_UP -> {
+                if (isDragging) {
+                    // --- Handle Drop ---
+                    val move = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
+                    if (move != null) {
+                        onMove?.invoke(move)
+                    }
+                    // Reset everything after the drag is complete
+                    resetSelection()
+                } else {
+                    // --- Handle Click ---
+                    if (selR == -1 && dragStartR != -1) {
+                        // This was a tap on a valid piece to select it for the first time
+                        selR = dragStartR
+                        selC = dragStartC
+                        possibleMoves = engine.legalMovesFor(selR, selC)
+                        try { SoundManager.playSelect() } catch (_: Exception) {}
+                    } else if (selR != -1) {
+                        // A piece was already selected, now decide what to do with this new tap
+                        val move = possibleMoves.firstOrNull { it.toR == r && it.toC == c }
+                        if (move != null) {
+                            // Tapped on a valid destination -> make the move
+                            onMove?.invoke(move)
+                            resetSelection()
+                        } else {
+                            val piece = engine.pieceAt(r, c)
+                            if (r == selR && c == selC) {
+                                // Tapped the same selected piece again -> deselect
+                                resetSelection()
+                            } else if (piece != '.' && piece.isUpperCase() == humanIsWhite) {
+                                // Tapped another of our pieces -> switch selection
+                                selR = r
+                                selC = c
+                                possibleMoves = engine.legalMovesFor(r, c)
+                                try { SoundManager.playSelect() } catch (_: Exception) {}
+                            } else {
+                                // Tapped an empty square or opponent piece that isn't a valid move -> deselect
+                                resetSelection()
+                            }
+                        }
+                    } else {
+                        // Tapped on an empty square or opponent piece with nothing selected
+                        resetSelection()
+                    }
+                }
+                invalidate()
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun resetSelection() {
+        isDragging = false
+        selR = -1
+        selC = -1
+        dragStartR = -1
+        dragStartC = -1
+        draggedPiece = '.'
+        possibleMoves = emptyList()
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
-        // recycle cached bitmaps to avoid leaks
         pieceCache.values.forEach { if (!it.isRecycled) it.recycle() }
         pieceCache.clear()
     }
+
+    // --- Mapeos entre coordenadas tablero (r,c) y visuales (vr,vc) ---
+    private fun toVisual(r: Int, c: Int): Pair<Int, Int> =
+        if (whiteAtBottom) r to c else (7 - r) to (7 - c)
+
+    private fun toBoard(vr: Int, vc: Int): Pair<Int, Int> =
+        if (whiteAtBottom) vr to vc else (7 - vr) to (7 - vc)
+
+    private fun dp(v: Float): Float = v * resources.displayMetrics.density
 }

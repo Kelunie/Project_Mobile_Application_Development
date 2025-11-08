@@ -6,12 +6,13 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.widget.*
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.net.LanSession
 import com.chesskel.net.UdpDiscovery
+import com.chesskel.ui.theme.ThemeUtils
 
-class PvpLobbyActivity : ComponentActivity() {
+class PvpLobbyActivity : AppCompatActivity() {
 
     private var scanner: UdpDiscovery.ClientScanner? = null
     private val hosts = mutableListOf<UdpDiscovery.HostInfo>()
@@ -22,6 +23,7 @@ class PvpLobbyActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_pvp_lobby)
 
         val tvIp = findViewById<TextView>(R.id.tvLocalIp)
@@ -34,7 +36,7 @@ class PvpLobbyActivity : ComponentActivity() {
         val localIp = LanSession.getLocalIpv4() ?: "-"
         @Suppress("SetTextI18n")
         // Display local IP and port (not localized compound label)
-        tvIp.text = "${getString(R.string.labelIP)}: $localIp:${LanSession.DEFAULT_PORT}"
+        tvIp.text = getString(R.string.local_ip_port, getString(R.string.labelIP), localIp, LanSession.DEFAULT_PORT)
 
         adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, mutableListOf())
         list.adapter = adapter
@@ -75,7 +77,7 @@ class PvpLobbyActivity : ComponentActivity() {
 
         joinBtn.setOnClickListener {
             val et = EditText(this).apply {
-                hint = "Host IP (e.g. 192.168.1.10)"
+                hint = getString(R.string.host_ip_hint)
                 inputType = InputType.TYPE_CLASS_PHONE or InputType.TYPE_NUMBER_FLAG_DECIMAL
             }
             AlertDialog.Builder(this)

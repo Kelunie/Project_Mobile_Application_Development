@@ -3,38 +3,64 @@ package com.chesskel.ui.menu
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.AiMode
 import com.chesskel.ui.pvp.PvpLobbyActivity
+import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.game.GameActivity
 
-class MainMenuActivity : ComponentActivity() {
+class MainMenuActivity : AppCompatActivity() {
+
+    private val prefs by lazy { getSharedPreferences("chesskel_prefs", MODE_PRIVATE) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Apply saved theme globally BEFORE inflating layout
+        ThemeUtils.applySavedTheme(this)
+
         setContentView(R.layout.activity_main_menu)
 
-        findViewById<Button>(R.id.btnVsAi).setOnClickListener {
-            showAiModeDialog()
+        val optAi = findViewById<LinearLayout>(R.id.option_ai)
+        val optPvp = findViewById<LinearLayout>(R.id.option_pvp)
+        val optProfile = findViewById<LinearLayout>(R.id.option_profile)
+        val btnTheme = findViewById<ImageButton>(R.id.btnTheme)
+        val tvVersion = findViewById<TextView>(R.id.tvVersion)
+
+        // Asegura que el botón queda por encima del ScrollView y recibe toques
+        btnTheme.bringToFront()
+        btnTheme.elevation = 16f
+        btnTheme.isClickable = true
+        btnTheme.isFocusable = true
+
+        // Icono inicial según el modo actual
+        syncThemeToggleIcon(btnTheme)
+
+        btnTheme.setOnClickListener {
+            val newDark = ThemeUtils.toggleAndPersist(this)
+            syncThemeToggleIcon(btnTheme)
         }
 
-        findViewById<Button>(R.id.btnPvp).setOnClickListener {
-            // Launch the new PvP lobby (LAN)
-            startActivity(Intent(this, PvpLobbyActivity::class.java))
-        }
+        optAi.setOnClickListener { showAiModeDialog() }
+        optPvp.setOnClickListener { startActivity(Intent(this, PvpLobbyActivity::class.java)) }
+        optProfile.setOnClickListener { Toast.makeText(this, getString(R.string.profile_todo), Toast.LENGTH_SHORT).show() }
 
-        findViewById<Button>(R.id.btnProfile).setOnClickListener {
-            Toast.makeText(this, "Profile (TODO)", Toast.LENGTH_SHORT).show()
-        }
+        tvVersion.text = getString(R.string.version_text, "1.0")
+    }
+
+    private fun syncThemeToggleIcon(btn: ImageButton) {
+        val dark = ThemeUtils.isDarkMode(this)
+        btn.setImageResource(if (dark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode)
+        btn.contentDescription = if (dark) getString(R.string.switch_to_light) else getString(R.string.switch_to_dark)
     }
 
     private fun showAiModeDialog() {
-        val inflater = LayoutInflater.from(this)
-        val dialogView = inflater.inflate(R.layout.dialog_ai_modes, null)
+        val dialogView = layoutInflater.inflate(R.layout.dialog_ai_modes, null)
         val dialog = AlertDialog.Builder(this).setView(dialogView).create()
 
         val modeEasy = dialogView.findViewById<LinearLayout>(R.id.mode_easy)
@@ -43,8 +69,7 @@ class MainMenuActivity : ComponentActivity() {
         val modePro = dialogView.findViewById<LinearLayout>(R.id.mode_pro)
 
         fun select(mode: AiMode) {
-            Toast.makeText(applicationContext, "${mode.label} selected", Toast.LENGTH_SHORT).show()
-            // Instead of immediately starting the game, ask the player which color they want to play.
+            Toast.makeText(applicationContext, getString(R.string.mode_selected_fmt, mode.label), Toast.LENGTH_SHORT).show()
             showAiColorChoice(mode)
             dialog.dismiss()
         }
@@ -57,7 +82,6 @@ class MainMenuActivity : ComponentActivity() {
         dialog.show()
     }
 
-    // New helper: show a simple dialog to choose whether the human plays White or Black.
     private fun showAiColorChoice(mode: AiMode) {
         val items = arrayOf(getString(R.string.play_as_white), getString(R.string.play_as_black))
         AlertDialog.Builder(this)

@@ -3,15 +3,19 @@ package com.chesskel
 
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.auth.LoginActivity
 import com.chesskel.ui.auth.RegisterActivity
 import com.chesskel.ui.menu.MainMenuActivity
+import com.chesskel.ui.theme.ThemeUtils
 
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Ensure theme is applied ASAP
+        ThemeUtils.applySavedTheme(this)
 
         val prefs = getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
         val hasSession = prefs.getLong("current_user_id", -1L) > 0L
