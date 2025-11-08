@@ -327,6 +327,9 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
             val blackMove = if (i + 1 < movesList.size) movesList[i + 1] else ""
 
             // Formato de tabla: "%-5s %-8s %s"
+            // Col 1: Número de jugada (5 caracteres, alineado a la izquierda)
+            // Col 2: Movimiento de blancas (8 caracteres, alineado a la izquierda)
+            // Col 3: Movimiento de negras (el resto del espacio)
             sb.append("%-5s%-8s%s\n".format("${moveNumber}.", whiteMove, blackMove))
 
             i += 2
