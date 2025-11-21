@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ChessKel</string>
+    <string name="app_name">ChessKelu</string>
     <string name="msgwelcome">Welcome</string>
     <string name="usernamelabel">Username</string>
     <string name="passwordlabel">Password</string>
