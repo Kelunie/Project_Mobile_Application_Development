@@ -12,6 +12,7 @@ import com.chesskel.game.AiMode
 import com.chesskel.ui.pvp.PvpLobbyActivity
 import com.chesskel.ui.theme.ThemeUtils
 import com.chesskel.ui.theme.CenteredActivity
+import com.chesskel.ui.profile.ProfileActivity
 
 class MainMenuActivity : CenteredActivity() {
 
@@ -45,7 +46,7 @@ class MainMenuActivity : CenteredActivity() {
 
         optAi.setOnClickListener { showAiModeDialog() }
         optPvp.setOnClickListener { startActivity(Intent(this, PvpLobbyActivity::class.java)) }
-        optProfile.setOnClickListener { Toast.makeText(this, getString(R.string.profile_todo), Toast.LENGTH_SHORT).show() }
+        optProfile.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
 
         tvVersion.text = getString(R.string.version_text)
     }

@@ -4,6 +4,7 @@
     <string name="msgwelcome">Welcome</string>
     <string name="usernamelabel">Username</string>
     <string name="passwordlabel">Password</string>
+    <string name="confirm_password_label">Confirm Password</string>
     <string name="createlabel">Create</string>
     <string name="emaillabel">Email</string>
     <string name="menulabel">Menu</string>
@@ -77,6 +78,7 @@
     <string name="profile_todo">Profile (TODO)</string>
     <string name="mode_selected_fmt">%1$s selected</string>
     <string name="all_fields_required">All fields are required</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
     <string name="account_created">Account created</string>
     <string name="email_exists">Email already exists</string>
     <string name="host_ip_hint">Host IP (e.g. 192.168.1.10)</string>
@@ -93,4 +95,24 @@
     <string name="switch_to_dark">Cambiar a Modo Oscuro</string>
     <string name="switch_to_light">Cambiar a Modo Claro</string>
     <string name="version_text">Version %1$s</string>
+
+    <!-- Profile screen strings (EN) -->
+    <string name="profile_name_label">Name</string>
+    <string name="profile_email_label">Email</string>
+    <string name="profile_location_label">I am from:</string>
+    <string name="profile_location_hint">Your city / country</string>
+    <string name="profile_save">Save changes</string>
+    <string name="profile_change_photo">Change profile picture</string>
+    <string name="profile_pick_gallery">Choose from gallery</string>
+    <string name="profile_take_photo">Take a photo</string>
+    <string name="profile_permission_denied">Permission denied</string>
+    <string name="profile_no_user">No user registered</string>
+    <string name="profile_saved">Profile updated</string>
+    <string name="profile_camera_not_available">Camera not available</string>
+    <string name="profile_location_no_maps">Not found any maps apps</string>
+    <string name="profile_location_button">Location</string>
+    <string name="profile_location_fetching">Getting location...</string>
+    <string name="profile_location_not_available">We could not obtain your current location</string>
+    <string name="profile_location_geocode_failed">Location could not be converted to address</string>
+    <string name="profile_location_permission_required">Location permission is required to continue</string>
 </resources>

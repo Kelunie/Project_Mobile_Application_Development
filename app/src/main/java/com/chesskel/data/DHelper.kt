@@ -61,6 +61,15 @@ class DBHelper(context: Context) :
         return writableDatabase.insert("usuarios", null, values)
     }
 
+    // Update user profile fields (image URI and location) for an existing user
+    fun updateUserProfile(id: Long, profileImageUri: String?, location: String?) {
+        val values = ContentValues().apply {
+            if (profileImageUri != null) put("profile_image_uri", profileImageUri) else putNull("profile_image_uri")
+            if (location != null) put("location", location) else putNull("location")
+        }
+        writableDatabase.update("usuarios", values, "id=?", arrayOf(id.toString()))
+    }
+
     // Get first user from the table
     fun getFirstUser(): UserEntity? {
         readableDatabase.rawQuery(

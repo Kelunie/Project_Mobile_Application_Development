@@ -89,10 +89,30 @@
     <!-- Login / auth strings -->
     <string name="login_fields_required">Email y contraseña son obligatorios</string>
     <string name="login_successful">Inicio de sesión exitoso</string>
-    <string name="invalid_credentials">Credenciales inválidas</string>
+    <string name="invalid_credentials">Credenciales invalidas</string>
 
     <string name="theme_toggle">Theme</string>
     <string name="switch_to_dark">Switch to dark</string>
     <string name="switch_to_light">Switch to light</string>
-    <string name="version_text">Versión 0.5</string>
+    <string name="version_text">versión 0.5</string>
+
+    <!-- Profile screen strings (ES) -->
+    <string name="profile_name_label">Nombre</string>
+    <string name="profile_email_label">Correo</string>
+    <string name="profile_location_label">Soy de:</string>
+    <string name="profile_location_hint">Tu ciudad / país</string>
+    <string name="profile_save">Guardar cambios</string>
+    <string name="profile_change_photo">Cambiar foto de perfil</string>
+    <string name="profile_pick_gallery">Buscar en la galería</string>
+    <string name="profile_take_photo">Tomar una foto</string>
+    <string name="profile_permission_denied">Permiso denegado</string>
+    <string name="profile_no_user">No hay ningún usuario registrado</string>
+    <string name="profile_saved">Perfil actualizado</string>
+    <string name="profile_camera_not_available">cámara no disponible</string>
+    <string name="profile_location_no_maps">No se encontró ninguna aplicación de mapas instalada.</string>
+    <string name="profile_location_button">Ubicación</string>
+    <string name="profile_location_fetching">Obteniendo ubicación…</string>
+    <string name="profile_location_not_available">No se pudo obtener tu ubicación actual</string>
+    <string name="profile_location_geocode_failed">No se pudo convertir la ubicación a dirección</string>
+    <string name="profile_location_permission_required">Se necesita permiso de ubicación para continuar</string>
 </resources>
