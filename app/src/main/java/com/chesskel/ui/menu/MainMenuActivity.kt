@@ -1,7 +1,9 @@
 package com.chesskel.ui.menu
 
 import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -31,6 +33,7 @@ class MainMenuActivity : CenteredActivity() {
         val optLearn = findViewById<LinearLayout>(R.id.option_learn)
         val btnTheme = findViewById<ImageButton>(R.id.btnTheme)
         val tvVersion = findViewById<TextView>(R.id.tvVersion)
+        val optDonate = findViewById<LinearLayout>(R.id.option_donate)
 
         // Asegura que el botón queda por encima del ScrollView y recibe toques
         btnTheme.bringToFront()
@@ -51,13 +54,56 @@ class MainMenuActivity : CenteredActivity() {
         optProfile.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
         optLearn.setOnClickListener { startActivity(Intent(this, LearningActivity::class.java)) }
 
+        optDonate.setOnClickListener {
+            openExternalLink("https://www.paypal.com/donate/?hosted_button_id=8BQJZBXGAPTFA")
+        }
+
         tvVersion.text = getString(R.string.version_text)
+    }
+
+    private fun openExternalLink(url: String) {
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            startActivity(intent)
+        } catch (e: ActivityNotFoundException) {
+            Toast.makeText(this, "No se encontró una app para abrir el enlace", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun syncThemeToggleIcon(btn: ImageButton) {
         val dark = ThemeUtils.isDarkMode(this)
+
+        // Icono del botón de tema
         btn.setImageResource(if (dark) R.drawable.ic_light_mode else R.drawable.ic_dark_mode)
         btn.contentDescription = if (dark) getString(R.string.switch_to_light) else getString(R.string.switch_to_dark)
+
+        // Fondo del icono principal: con tile en oscuro, sin borde en claro
+        val appIcon = findViewById<android.widget.ImageView>(R.id.ivAppIcon)
+        if (dark) {
+            appIcon.setBackgroundResource(R.drawable.bg_icon_tile)
+        } else {
+            appIcon.setBackgroundResource(android.R.color.transparent)
+        }
+
+        // Ajustar colores de la status bar para que los iconos sean legibles
+        val window = window
+        val statusColor = if (dark) {
+            // en modo oscuro, fondo oscuro para status bar
+            getColor(R.color.surface_bg_dark)
+        } else {
+            // en modo claro, fondo claro
+            getColor(R.color.surface_bg)
+        }
+        window.statusBarColor = statusColor
+
+        // En modo claro, pedir iconos oscuros; en modo oscuro, iconos claros
+        val decor = window.decorView
+        @Suppress("DEPRECATION")
+        decor.systemUiVisibility = if (!dark) {
+            decor.systemUiVisibility or android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        } else {
+            decor.systemUiVisibility and android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
+        }
     }
 
     private fun showAiModeDialog() {

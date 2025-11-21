@@ -94,7 +94,7 @@
     <string name="theme_toggle">Theme</string>
     <string name="switch_to_dark">Cambiar a Modo Oscuro</string>
     <string name="switch_to_light">Cambiar a Modo Claro</string>
-    <string name="version_text">versión 0.5</string>
+    <string name="version_text">versión 1.0</string>
 
     <!-- Profile screen strings (ES) -->
     <string name="profile_name_label">Nombre</string>
@@ -162,4 +162,10 @@
     <string name="lesson_king_video1_title">Movimiento del rey</string>
     <string name="lesson_moves_video1_title">Movimientos básicos de todas las piezas</string>
     <string name="lesson_rules_video1_title">Reglas básicas del ajedrez</string>
+
+    <!-- Seccion creditos y donaciones -->
+    <string name="company_name">Kelunie.inc</string>
+    <string name="game_by_label">Game by Kelunie.inc</string>
+    <string name="donations_title">¿Te gusta el juego? Apóyalo con una donación</string>
+    <string name="donate_button_label">Donar vía PayPal</string>
 </resources>

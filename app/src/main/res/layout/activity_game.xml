@@ -1,75 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- Top: info + move list + controls (top half) -->
+    <!-- Top section: info, moves, controls -->
     <LinearLayout
-        android:orientation="vertical"
+        android:id="@+id/top_section"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="vertical"
         android:padding="8dp">
 
         <TextView
             android:id="@+id/tvGameInfo"
-            android:text="@string/white_to_move"
-            android:textSize="16sp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:padding="8dp"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:text="@string/white_to_move"
+            android:textSize="16sp" />
 
-        <ScrollView
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvMoves"
             android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
+            android:layout_height="150dp"
             android:paddingTop="8dp"
-            android:paddingBottom="8dp">
-
-            <TextView
-                android:id="@+id/tvMoves"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:fontFamily="monospace"
-                android:text=""
-                android:textSize="14sp"
-                android:padding="4dp" />
-        </ScrollView>
+            android:paddingBottom="8dp" />
 
         <Button
             android:id="@+id/btnResign"
-            android:layout_marginTop="8dp"
-            android:text="@string/btnResgin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
             android:background="@drawable/bg_btn_primary"
-            android:textColor="@color/btn_text"
+            android:letterSpacing="0.12"
+            android:text="@string/btnResgin"
             android:textAllCaps="true"
-            android:textStyle="bold"
-            android:letterSpacing="0.12" />
+            android:textColor="@color/btn_text"
+            android:textStyle="bold" />
 
-        <!-- New: Post-game controls (hidden by default from code) -->
+        <!-- Post-game controls -->
         <LinearLayout
             android:id="@+id/post_game_buttons"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
             android:layout_marginTop="8dp"
             android:gravity="center"
+            android:orientation="horizontal"
             android:visibility="gone">
 
             <Button
                 android:id="@+id/btnPlayAgain"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/btnPlayAgain"
+                android:layout_weight="1"
                 android:background="@drawable/bg_btn_primary"
-                android:textColor="@color/btn_text"
+                android:letterSpacing="0.12"
+                android:text="@string/btnPlayAgain"
                 android:textAllCaps="true"
-                android:textStyle="bold"
-                android:letterSpacing="0.12" />
+                android:textColor="@color/btn_text"
+                android:textStyle="bold" />
 
             <View
                 android:layout_width="8dp"
@@ -78,23 +68,23 @@
             <Button
                 android:id="@+id/btnMainMenu"
                 android:layout_width="0dp"
-                android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/btnMainMenu"
+                android:layout_weight="1"
                 android:background="@drawable/bg_btn_primary"
-                android:textColor="@color/btn_text"
+                android:letterSpacing="0.12"
+                android:text="@string/btnMainMenu"
                 android:textAllCaps="true"
-                android:textStyle="bold"
-                android:letterSpacing="0.12" />
+                android:textColor="@color/btn_text"
+                android:textStyle="bold" />
         </LinearLayout>
-
     </LinearLayout>
 
-    <!-- Bottom: board area (bottom half), centrado dentro del padding general del contenedor -->
+    <!-- Bottom section: chess board -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1.5"
+        android:layout_below="@id/top_section"
+        android:layout_alignParentBottom="true"
         android:foregroundGravity="center">
 
         <com.chesskel.ui.game.ChessBoardView
@@ -103,4 +93,4 @@
             android:layout_height="match_parent"
             android:layout_gravity="center" />
     </FrameLayout>
-</LinearLayout>
+</RelativeLayout>

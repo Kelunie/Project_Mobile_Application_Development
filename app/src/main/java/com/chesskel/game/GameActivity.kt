@@ -8,6 +8,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.chesskel.R
 import com.chesskel.game.AiBot
 import com.chesskel.game.AiMode
@@ -30,7 +32,7 @@ class GameActivity : CenteredActivity(), GameEventListener {
 
     private lateinit var chessBoard: ChessBoardView
     private lateinit var tvGameInfo: TextView
-    private lateinit var tvMoves: TextView
+    private lateinit var rvMoves: RecyclerView
     private lateinit var btnResign: Button
 
     // New buttons requested: Play Again and Main Menu
@@ -56,8 +58,10 @@ class GameActivity : CenteredActivity(), GameEventListener {
 
         chessBoard = findViewById(R.id.chessBoard)
         tvGameInfo = findViewById(R.id.tvGameInfo)
-        tvMoves = findViewById(R.id.tvMoves)
+        rvMoves = findViewById(R.id.rvMoves)
         btnResign = findViewById(R.id.btnResign)
+
+        rvMoves.layoutManager = LinearLayoutManager(this)
 
         // find new buttons (they must exist in the activity_game layout)
         btnPlayAgain = findViewById(R.id.btnPlayAgain)
@@ -195,7 +199,7 @@ class GameActivity : CenteredActivity(), GameEventListener {
         // UI updates
         chessBoard.invalidate()
         movesList.add(san)
-        updateMovesText()
+        updateMoves()
         refreshUi()
 
         // Game over handling
@@ -223,24 +227,10 @@ class GameActivity : CenteredActivity(), GameEventListener {
         }
     }
 
-    private fun updateMovesText() {
-        val sb = StringBuilder()
-        var moveNumber = 1
-        var i = 0
-        while (i < movesList.size) {
-            val whiteMove = movesList[i]
-            val blackMove = if (i + 1 < movesList.size) movesList[i + 1] else ""
-
-            // Formato de tabla: "%-5s %-8s %s"
-            // Col 1: Número de jugada (5 caracteres, alineado a la izquierda)
-            // Col 2: Movimiento de blancas (8 caracteres, alineado a la izquierda)
-            // Col 3: Movimiento de negras (el resto del espacio)
-            sb.append("%-5s%-8s%s\n".format("${moveNumber}.", whiteMove, blackMove))
-
-            i += 2
-            moveNumber++
-        }
-        tvMoves.text = sb.toString()
+    private fun updateMoves() {
+        val movesText = movesList.joinToString("\n")
+        rvMoves.adapter = MovesAdapter(movesList)
+        rvMoves.scrollToPosition(movesList.size - 1)
     }
 
     private fun refreshUi() {
@@ -279,7 +269,7 @@ class GameActivity : CenteredActivity(), GameEventListener {
         aiBot?.stop()
         engine.reset()
         movesList.clear()
-        updateMovesText()
+        updateMoves()
         chessBoard.bindEngine(engine)
         chessBoard.lastMove = null
         chessBoard.invalidate()

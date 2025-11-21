@@ -94,7 +94,7 @@
     <string name="theme_toggle">Tema</string>
     <string name="switch_to_dark">Switch to dark</string>
     <string name="switch_to_light">Switch to light</string>
-    <string name="version_text">Version %1$s</string>
+    <string name="version_text">Version 1.0</string>
 
     <!-- Profile screen strings (EN) -->
     <string name="profile_name_label">Name</string>
@@ -163,4 +163,10 @@
     <string name="lesson_king_video1_title">King movement</string>
     <string name="lesson_moves_video1_title">Basic moves of all pieces</string>
     <string name="lesson_rules_video1_title">Basic chess rules</string>
+
+    <!-- Credits and donations section -->
+    <string name="company_name">Kelunie.inc</string>
+    <string name="game_by_label">Game by kelunie.inc</string>
+    <string name="donations_title">Enjoy the game? Support it with a donation</string>
+    <string name="donate_button_label">Donate via PayPal</string>
 </resources>
