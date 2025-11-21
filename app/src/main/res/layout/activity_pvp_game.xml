@@ -3,7 +3,9 @@
     android:orientation="vertical"
     android:gravity="center_horizontal"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_main_surface"
+    android:padding="8dp">
 
     <Button
         android:id="@+id/btnResign"
@@ -12,6 +14,11 @@
         android:layout_marginTop="12dp"
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
+        android:background="@drawable/bg_btn_primary"
+        android:textColor="@color/btn_text"
+        android:textAllCaps="true"
+        android:textStyle="bold"
+        android:letterSpacing="0.12"
         android:text="@string/btnResgin" />
 
     <ScrollView

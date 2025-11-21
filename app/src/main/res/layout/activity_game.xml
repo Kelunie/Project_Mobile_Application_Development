@@ -42,7 +42,12 @@
             android:layout_marginTop="8dp"
             android:text="@string/btnResgin"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_btn_primary"
+            android:textColor="@color/btn_text"
+            android:textAllCaps="true"
+            android:textStyle="bold"
+            android:letterSpacing="0.12" />
 
         <!-- New: Post-game controls (hidden by default from code) -->
         <LinearLayout
@@ -59,7 +64,12 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/btnPlayAgain" />
+                android:text="@string/btnPlayAgain"
+                android:background="@drawable/bg_btn_primary"
+                android:textColor="@color/btn_text"
+                android:textAllCaps="true"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
 
             <View
                 android:layout_width="8dp"
@@ -70,7 +80,12 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:text="@string/btnMainMenu" />
+                android:text="@string/btnMainMenu"
+                android:background="@drawable/bg_btn_primary"
+                android:textColor="@color/btn_text"
+                android:textAllCaps="true"
+                android:textStyle="bold"
+                android:letterSpacing="0.12" />
         </LinearLayout>
 
     </LinearLayout>
