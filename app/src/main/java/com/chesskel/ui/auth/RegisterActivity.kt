@@ -6,16 +6,19 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.Security
+import com.chesskel.ui.theme.ThemeUtils
 
-class RegisterActivity : ComponentActivity() {
+class RegisterActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_register)
+
 
         val etName = findViewById<EditText>(R.id.etName)
         val etEmail = findViewById<EditText>(R.id.etEmail)
@@ -29,7 +32,7 @@ class RegisterActivity : ComponentActivity() {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString()
             if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.all_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val id = db.insertUser(
@@ -40,11 +43,11 @@ class RegisterActivity : ComponentActivity() {
             if (id > 0) {
                 getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
                     .edit().putLong("current_user_id", id).apply()
-                Toast.makeText(this, "Account created", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.account_created), Toast.LENGTH_SHORT).show()
                 startActivity(Intent(this, MainMenuActivity::class.java))
                 finish()
             } else {
-                Toast.makeText(this, "Email already exists", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.email_exists), Toast.LENGTH_SHORT).show()
             }
         }
 

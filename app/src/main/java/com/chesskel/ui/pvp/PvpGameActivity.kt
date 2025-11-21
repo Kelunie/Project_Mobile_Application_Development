@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.*
 import com.chesskel.net.LanSession
@@ -14,12 +14,12 @@ import com.chesskel.net.UdpDiscovery
 import com.chesskel.ui.game.ChessBoardView
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.SoundManager
+import com.chesskel.ui.theme.ThemeUtils
 
 /**
  * PvP networked game screen (LAN).
- * AI code remains untouched.
  */
-class PvpGameActivity : ComponentActivity(), GameEventListener {
+class PvpGameActivity : AppCompatActivity(), GameEventListener {
 
     private val engine = ChessEngine()
     private lateinit var chessBoard: ChessBoardView
@@ -41,6 +41,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_pvp_game)
 
         SoundManager.init(this)
@@ -49,6 +50,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         tvInfo = findViewById(R.id.tvGameInfo)
         tvMoves = findViewById(R.id.tvMoves)
         btnResign = findViewById(R.id.btnResign)
+
+        // Asegurar rotación 180° cuando jugamos con negras (visual y toques)
+        chessBoard.rotateForBlack = true
 
         engine.eventListener = this
         chessBoard.bindEngine(engine)
@@ -71,7 +75,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 override fun onConnected(peerIp: String, iPlayWhite: Boolean) {
                     runOnUiThread {
                         mySide = if (iPlayWhite) Side.WHITE else Side.BLACK
-                        // Tell the board which side the human controls
+                        // Tell the board which side the human controls -> fija perspectiva
                         chessBoard.humanIsWhite = iPlayWhite
                         val sideTxt = if (iPlayWhite) getString(R.string.white) else getString(R.string.black)
                         // Show peer name if available, otherwise show IP
@@ -91,8 +95,9 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
 
                 override fun onPeerLeft(reason: String?) {
                     runOnUiThread {
-                        Toast.makeText(this@PvpGameActivity, reason ?: "Disconnected", Toast.LENGTH_LONG).show()
-                        finish()
+                        Toast.makeText(this@PvpGameActivity, reason ?: getString(R.string.disconect), Toast.LENGTH_LONG).show()
+                        // Salida ordenada (cierre LAN en background + volver al menú sin bloquear)
+                        exitToMenu()
                     }
                 }
 
@@ -176,7 +181,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
             runOnUiThread {
                 // Ensure handshake finished and it's my turn
                 if (mySide == null || lan?.isConnected() != true) {
-                    Toast.makeText(this, "Connecting… please wait", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.conecting), Toast.LENGTH_SHORT).show()
                     return@runOnUiThread
                 }
                 if (!isMyTurn()) {
@@ -196,9 +201,11 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
                 .setTitle(getString(R.string.btnResgin))
                 .setMessage(getString(R.string.resign_confirm))
                 .setPositiveButton(getString(R.string.yes)) { d, _ ->
-                    try { lan?.resign() } catch (_: Exception) {}
-                    d.dismiss()
-                    finish()
+                    // 1) Enviar resign y cerrar LAN en background
+                    try { lan?.resignAsync() } catch (_: Exception) {}
+                    // 2) Cerrar pantalla de forma “no bloqueante”
+                    try { d.dismiss() } catch (_: Exception) {}
+                    exitToMenu()
                 }
                 .setNegativeButton(getString(R.string.no)) { d, _ -> d.dismiss() }
                 .show()
@@ -213,9 +220,10 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     }
 
     private fun showPromotionDialog(baseMove: Move) {
-        val labels = arrayOf("Queen", "Knight", "Rook", "Bishop")
+        val labels = arrayOf(getString(R.string.promotionQueen), getString(R.string.promotionKnight),
+            getString(R.string.promotionRook), getString(R.string.promotionBishop))
         AlertDialog.Builder(this)
-            .setTitle("Promote to")
+            .setTitle(getString(R.string.dialogPromote))
             .setItems(labels) { d, which ->
                 val isWhite = engine.pieceAt(baseMove.fromR, baseMove.fromC).isUpperCase()
                 val promoChar = when (which) {
@@ -236,7 +244,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
     private fun performMove(m: Move, isLocal: Boolean) {
         val my = mySide
         if (my == null) {
-            Toast.makeText(this, "Not connected", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.notConnectTxt), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -253,14 +261,14 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         } else {
             // Remote move must come from opponent and be legal in current state
             if (mover == '.' || moverIsWhite == iAmWhite) {
-                Toast.makeText(this, "Out of sync (wrong side)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.Outofsyncwrongside), Toast.LENGTH_SHORT).show()
                 return
             }
             val isLegal = engine.legalMovesFor(m.fromR, m.fromC).any {
                 it.fromR == m.fromR && it.fromC == m.fromC && it.toR == m.toR && it.toC == m.toC && it.promotion == m.promotion
             }
             if (!isLegal) {
-                Toast.makeText(this, "Out of sync (illegal move)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.Outofsyncillegalmove), Toast.LENGTH_SHORT).show()
                 return
             }
         }
@@ -288,10 +296,10 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         if (isLocal) {
             if (lan?.isConnected() == true) {
                 try { lan?.sendMove(m.fromR, m.fromC, m.toR, m.toC, m.promotion) } catch (e: Exception) {
-                    Toast.makeText(this, "Send failed: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, getString(R.string.send_failed_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
                 }
             } else {
-                Toast.makeText(this, "Peer not connected yet", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.peer_not_connected), Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -315,15 +323,16 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         var moveNumber = 1
         var i = 0
         while (i < movesList.size) {
-            sb.append("$moveNumber. ")
-            sb.append(movesList[i])
-            i++
-            if (i < movesList.size) {
-                sb.append("    ")
-                sb.append(movesList[i])
-                i++
-            }
-            sb.append("\n")
+            val whiteMove = movesList[i]
+            val blackMove = if (i + 1 < movesList.size) movesList[i + 1] else ""
+
+            // Formato de tabla: "%-5s %-8s %s"
+            // Col 1: Número de jugada (5 caracteres, alineado a la izquierda)
+            // Col 2: Movimiento de blancas (8 caracteres, alineado a la izquierda)
+            // Col 3: Movimiento de negras (el resto del espacio)
+            sb.append("%-5s%-8s%s\n".format("${moveNumber}.", whiteMove, blackMove))
+
+            i += 2
             moveNumber++
         }
         tvMoves.text = sb.toString()
@@ -400,7 +409,7 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         movesList.clear()
         chessBoard.lastMove = null
         engine.reset()
-        // Keep same sides as negotiated initially; board side is already set
+        // Keep same sides as negotiated initially; board side is already set via chessBoard.humanIsWhite
         chessBoard.invalidate()
         tvMoves.text = ""
         refreshUi()
@@ -421,7 +430,6 @@ class PvpGameActivity : ComponentActivity(), GameEventListener {
         }
         runOnUiThread { showGameOverDialog(msg) }
     }
-
 
     // Keep session alive unless Activity is destroyed
     override fun onDestroy() {

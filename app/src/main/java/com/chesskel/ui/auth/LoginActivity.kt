@@ -7,15 +7,17 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.activity.ComponentActivity
+import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.Security
+import com.chesskel.ui.theme.ThemeUtils
 
-class LoginActivity : ComponentActivity() {
+class LoginActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ThemeUtils.applySavedTheme(this)
         setContentView(R.layout.activity_login)
 
         val etEmail = findViewById<EditText>(R.id.etEmail)
@@ -28,7 +30,7 @@ class LoginActivity : ComponentActivity() {
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString()
             if (email.isEmpty() || pass.isEmpty()) {
-                Toast.makeText(this, "Email and password are required", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.login_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             val hash = Security.sha256(pass)
@@ -39,11 +41,11 @@ class LoginActivity : ComponentActivity() {
                     getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
                         .edit().putLong("current_user_id", userId).apply()
                     // will apears a toeast "login successful" before main menu
-                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
                     startActivity(Intent(this, MainMenuActivity::class.java))
                     finish()
                 } else {
-                    Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.invalid_credentials), Toast.LENGTH_SHORT).show()
                 }
             }
         }

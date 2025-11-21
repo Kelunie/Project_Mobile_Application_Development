@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base oscuros -->
+    <color name="surface_bg">#FF0C0C0F</color>
+    <color name="btn_text">#FFFFFFFF</color>
+    <color name="btn_icon_tint">#FFFF5A5A</color>
+
+    <!-- Gradientes (modo oscuro) -->
+    <color name="ai_start">#FF5F0C10</color>
+    <color name="ai_end">#FF0B0B0C</color>
+    <color name="pvp_start">#FF331C59</color>
+    <color name="pvp_end">#FF0B0B0C</color>
+    <color name="profile_start">#FF10222C</color>
+    <color name="profile_end">#FF0B0B0C</color>
+
+    <color name="btn_border">#FF5D1F23</color>
+
+    <!-- Header -->
+    <color name="glow_start">#55FF2C2C</color>
+    <color name="glow_end">#00000000</color>
+    <color name="icon_tile_bg">#1AFFFFFF</color>
+    <color name="icon_tile_border">#33FF5A5A</color>
+
+    <color name="underline_center">#66FF4A4A</color>
+    <color name="underline_edge">#00000000</color>
+
+    <!-- Footer -->
+    <color name="version_text">#FF666A75</color>
+</resources>

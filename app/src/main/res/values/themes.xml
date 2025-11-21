@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Theme.ChessKel" parent="android:Theme.Material.Light.NoActionBar" />
+    <!-- Tema DayNight sin ActionBar -->
+    <style name="Theme.ChessKel" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Usa un color que tenga variante en values-night -->
+        <item name="android:windowBackground">@drawable/bg_main_surface</item>
+        <item name="android:statusBarColor">@color/surface_bg</item>
+        <item name="android:navigationBarColor">@color/surface_bg</item>
+        <item name="android:forceDarkAllowed">true</item>
+    </style>
 </resources>
