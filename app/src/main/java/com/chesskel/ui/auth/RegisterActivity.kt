@@ -23,6 +23,7 @@ class RegisterActivity : CenteredActivity() {
         val etName = findViewById<EditText>(R.id.etName)
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
+        val etConfirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
         val btnCreate = findViewById<Button>(R.id.btnCreate)
         val btnGoLogin = findViewById<TextView>(R.id.btnGoLogin)
         val db = DBHelper(this)
@@ -31,10 +32,17 @@ class RegisterActivity : CenteredActivity() {
             val name = etName.text.toString().trim()
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString()
-            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+            val confirmPass = etConfirmPassword.text.toString()
+            if (name.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
                 Toast.makeText(this, getString(R.string.all_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            if (pass != confirmPass) {
+                Toast.makeText(this, getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val id = db.insertUser(
                 nombre = name,
                 email = email,

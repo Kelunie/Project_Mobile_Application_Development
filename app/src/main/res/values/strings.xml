@@ -3,6 +3,7 @@
     <string name="msgwelcome">Bienvenido</string>
     <string name="usernamelabel">Nombre de Usuario</string>
     <string name="passwordlabel">Contraseña</string>
+    <string name="confirm_password_label">Confirmar contraseña</string>
     <string name="createlabel">Crear</string>
     <string name="emaillabel">Correo</string>
     <string name="menulabel">Menu</string>
@@ -76,6 +77,7 @@
     <string name="profile_todo">Perfil (Pendiente)</string>
     <string name="mode_selected_fmt">%1$s seleccionado</string>
     <string name="all_fields_required">Todos los campos son obligatorios</string>
+    <string name="passwords_do_not_match">Las contraseñas no coinciden</string>
     <string name="account_created">Cuenta creada</string>
     <string name="email_exists">El correo ya existe</string>
     <string name="host_ip_hint">IP del host (ej. 192.168.1.10)</string>

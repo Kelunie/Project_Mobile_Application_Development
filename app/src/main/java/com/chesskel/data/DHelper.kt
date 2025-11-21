@@ -13,12 +13,14 @@ data class UserEntity(
     val nombre: String,
     val email: String,
     val passwordHash: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val profileImageUri: String?,
+    val location: String?
 )
 
 // DBHelper class
 class DBHelper(context: Context) :
-    SQLiteOpenHelper(context, "chesskel.db", null, 1) {
+    SQLiteOpenHelper(context, "chesskel.db", null, 2) { // version bumped to 2
 
     // Create  table if not exists
     override fun onCreate(db: SQLiteDatabase) {
@@ -29,7 +31,9 @@ class DBHelper(context: Context) :
                 nombre TEXT NOT NULL,
                 email TEXT NOT NULL UNIQUE,
                 password_hash TEXT NOT NULL,
-                created_at INTEGER NOT NULL
+                created_at INTEGER NOT NULL,
+                profile_image_uri TEXT,
+                location TEXT
             )
             """.trimIndent()
         )
@@ -37,8 +41,10 @@ class DBHelper(context: Context) :
 
     // Upgrade database
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        db.execSQL("DROP TABLE IF EXISTS usuarios")
-        onCreate(db)
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE usuarios ADD COLUMN profile_image_uri TEXT")
+            db.execSQL("ALTER TABLE usuarios ADD COLUMN location TEXT")
+        }
     }
 
     // Insert user into the table
@@ -48,6 +54,9 @@ class DBHelper(context: Context) :
             put("email", email)
             put("password_hash", passwordHash)
             put("created_at", System.currentTimeMillis())
+            // Nuevos campos: inicialmente null
+            putNull("profile_image_uri")
+            putNull("location")
         }
         return writableDatabase.insert("usuarios", null, values)
     }
@@ -55,7 +64,7 @@ class DBHelper(context: Context) :
     // Get first user from the table
     fun getFirstUser(): UserEntity? {
         readableDatabase.rawQuery(
-            "SELECT id,nombre,email,password_hash,created_at FROM usuarios ORDER BY id LIMIT 1",
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_uri,location FROM usuarios ORDER BY id LIMIT 1",
             null
         ).use { c ->
             return if (c.moveToFirst()) c.toUser() else null
@@ -65,7 +74,7 @@ class DBHelper(context: Context) :
     // Get a user by id
     fun getUserById(id: Long): UserEntity? {
         readableDatabase.rawQuery(
-            "SELECT id,nombre,email,password_hash,created_at FROM usuarios WHERE id=? LIMIT 1",
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_uri,location FROM usuarios WHERE id=? LIMIT 1",
             arrayOf(id.toString())
         ).use { c ->
             return if (c.moveToFirst()) c.toUser() else null
@@ -79,6 +88,8 @@ class DBHelper(context: Context) :
             nombre = getString(getColumnIndexOrThrow("nombre")),
             email = getString(getColumnIndexOrThrow("email")),
             passwordHash = getString(getColumnIndexOrThrow("password_hash")),
-            createdAt = getLong(getColumnIndexOrThrow("created_at"))
+            createdAt = getLong(getColumnIndexOrThrow("created_at")),
+            profileImageUri = getString(getColumnIndexOrThrow("profile_image_uri")).takeUnless { it.isNullOrEmpty() },
+            location = getString(getColumnIndexOrThrow("location")).takeUnless { it.isNullOrEmpty() }
         )
 }
