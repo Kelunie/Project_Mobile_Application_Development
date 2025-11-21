@@ -6,13 +6,13 @@ import android.os.Bundle
 import android.text.InputType
 import android.view.View
 import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.net.LanSession
 import com.chesskel.net.UdpDiscovery
 import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.theme.CenteredActivity
 
-class PvpLobbyActivity : AppCompatActivity() {
+class PvpLobbyActivity : CenteredActivity() {
 
     private var scanner: UdpDiscovery.ClientScanner? = null
     private val hosts = mutableListOf<UdpDiscovery.HostInfo>()
@@ -24,7 +24,7 @@ class PvpLobbyActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.applySavedTheme(this)
-        setContentView(R.layout.activity_pvp_lobby)
+        setCenteredContentView(R.layout.activity_pvp_lobby)
 
         val tvIp = findViewById<TextView>(R.id.tvLocalIp)
         val hostBtn = findViewById<Button>(R.id.btnHost)
@@ -64,7 +64,7 @@ class PvpLobbyActivity : AppCompatActivity() {
                     val userId = prefs.getLong("current_user_id", -1L)
                     val db = com.chesskel.data.DBHelper(this)
                     val myName = if (userId > 0L) db.getUserById(userId)?.nombre else null
-                    val hostNameToSend = myName ?: "ChessKel Host ($localIp)"
+                    val hostNameToSend = myName ?: "ChessKel Host (${LanSession.getLocalIpv4() ?: "-"})"
                     startActivity(
                         Intent(this, PvpGameActivity::class.java)
                             .putExtra("role", "host")

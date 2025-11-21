@@ -6,18 +6,18 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.Security
 import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.theme.CenteredActivity
 
-class RegisterActivity : AppCompatActivity() {
+class RegisterActivity : CenteredActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.applySavedTheme(this)
-        setContentView(R.layout.activity_register)
+        setCenteredContentView(R.layout.activity_register)
 
 
         val etName = findViewById<EditText>(R.id.etName)

@@ -7,16 +7,13 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.AiMode
 import com.chesskel.ui.pvp.PvpLobbyActivity
 import com.chesskel.ui.theme.ThemeUtils
-import com.chesskel.ui.game.GameActivity
+import com.chesskel.ui.theme.CenteredActivity
 
-class MainMenuActivity : AppCompatActivity() {
-
-    private val prefs by lazy { getSharedPreferences("chesskel_prefs", MODE_PRIVATE) }
+class MainMenuActivity : CenteredActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,7 +21,7 @@ class MainMenuActivity : AppCompatActivity() {
         // Apply saved theme globally BEFORE inflating layout
         ThemeUtils.applySavedTheme(this)
 
-        setContentView(R.layout.activity_main_menu)
+        setCenteredContentView(R.layout.activity_main_menu)
 
         val optAi = findViewById<LinearLayout>(R.id.option_ai)
         val optPvp = findViewById<LinearLayout>(R.id.option_pvp)
@@ -42,7 +39,7 @@ class MainMenuActivity : AppCompatActivity() {
         syncThemeToggleIcon(btnTheme)
 
         btnTheme.setOnClickListener {
-            val newDark = ThemeUtils.toggleAndPersist(this)
+            ThemeUtils.toggleAndPersist(this)
             syncThemeToggleIcon(btnTheme)
         }
 
@@ -50,7 +47,7 @@ class MainMenuActivity : AppCompatActivity() {
         optPvp.setOnClickListener { startActivity(Intent(this, PvpLobbyActivity::class.java)) }
         optProfile.setOnClickListener { Toast.makeText(this, getString(R.string.profile_todo), Toast.LENGTH_SHORT).show() }
 
-        tvVersion.text = getString(R.string.version_text, "1.0")
+        tvVersion.text = getString(R.string.version_text)
     }
 
     private fun syncThemeToggleIcon(btn: ImageButton) {

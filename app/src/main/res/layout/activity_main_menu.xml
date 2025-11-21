@@ -3,14 +3,14 @@
     android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_main_surface"
-    android:padding="24dp">
+    android:background="@drawable/bg_main_surface">
 
     <!-- Contenido scrollable -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:fillViewport="true"
+        android:padding="24dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -189,13 +189,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
+                android:text="@string/version_text"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="@color/version_text"
-                android:text="@string/version_text" />
+                android:textColor="@color/version_text" />
         </LinearLayout>
     </ScrollView>
 
-    <!-- Mueve el botón al FINAL para que quede encima; añade elevación -->
+    <!-- Botón de tema flotante -->
     <ImageButton
         android:id="@+id/btnTheme"
         android:layout_width="44dp"

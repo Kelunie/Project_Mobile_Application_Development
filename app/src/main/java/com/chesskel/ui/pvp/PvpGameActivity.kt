@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.game.*
 import com.chesskel.net.LanSession
@@ -15,11 +14,12 @@ import com.chesskel.ui.game.ChessBoardView
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.SoundManager
 import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.theme.CenteredActivity
 
 /**
  * PvP networked game screen (LAN).
  */
-class PvpGameActivity : AppCompatActivity(), GameEventListener {
+class PvpGameActivity : CenteredActivity(), GameEventListener {
 
     private val engine = ChessEngine()
     private lateinit var chessBoard: ChessBoardView
@@ -42,7 +42,7 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.applySavedTheme(this)
-        setContentView(R.layout.activity_pvp_game)
+        setCenteredContentView(R.layout.activity_pvp_game)
 
         SoundManager.init(this)
 
