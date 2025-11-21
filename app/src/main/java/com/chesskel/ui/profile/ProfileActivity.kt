@@ -54,8 +54,9 @@ class ProfileActivity : CenteredActivity() {
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
-            val uri = result.data?.data
-            if (uri != null) {
+            result.data?.data?.let { uri ->
+                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                contentResolver.takePersistableUriPermission(uri, takeFlags)
                 currentProfileImageUri = uri
                 ivProfileImage.setImageURI(uri)
             }
@@ -131,9 +132,21 @@ class ProfileActivity : CenteredActivity() {
         tvLocationValue.text = currentUser?.location ?: getString(R.string.profile_location_hint)
 
         currentUser?.profileImageUri?.let { uriString ->
-            val uri = Uri.parse(uriString)
-            currentProfileImageUri = uri
-            ivProfileImage.setImageURI(uri)
+            try {
+                val uri = Uri.parse(uriString)
+                // Check if we can still read the URI.
+                contentResolver.openInputStream(uri)?.close()
+                currentProfileImageUri = uri
+                ivProfileImage.setImageURI(uri)
+            } catch (e: SecurityException) {
+                // This can happen if the URI permission is lost.
+                // Clear the invalid URI from the database.
+                currentUser?.let { user ->
+                    dbHelper.updateUserProfile(user.id, null, user.location)
+                }
+                // Optionally, show a toast to the user.
+                Toast.makeText(this, getString(R.string.profile_image_access_error), Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -176,8 +189,9 @@ class ProfileActivity : CenteredActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
+            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
                 type = "image/*"
+                addCategory(Intent.CATEGORY_OPENABLE)
             }
             pickImageLauncher.launch(intent)
         } else {

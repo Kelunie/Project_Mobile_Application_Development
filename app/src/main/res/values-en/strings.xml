@@ -117,6 +117,7 @@
     <string name="profile_location_permission_required">Location permission is required to continue</string>
 
     <!-- Learning section (EN) -->
+    <string name="profile_image_access_error">The profile picture could not be loaded. Please select it again.</string>
     <string name="learn_to_play">Learn to play</string>
     <string name="learning_video_coming_soon">Coming soon: YouTube video</string>
 
