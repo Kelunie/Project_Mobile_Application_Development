@@ -13,6 +13,7 @@ import com.chesskel.ui.pvp.PvpLobbyActivity
 import com.chesskel.ui.theme.ThemeUtils
 import com.chesskel.ui.theme.CenteredActivity
 import com.chesskel.ui.profile.ProfileActivity
+import com.chesskel.ui.learn.LearningActivity
 
 class MainMenuActivity : CenteredActivity() {
 
@@ -27,6 +28,7 @@ class MainMenuActivity : CenteredActivity() {
         val optAi = findViewById<LinearLayout>(R.id.option_ai)
         val optPvp = findViewById<LinearLayout>(R.id.option_pvp)
         val optProfile = findViewById<LinearLayout>(R.id.option_profile)
+        val optLearn = findViewById<LinearLayout>(R.id.option_learn)
         val btnTheme = findViewById<ImageButton>(R.id.btnTheme)
         val tvVersion = findViewById<TextView>(R.id.tvVersion)
 
@@ -47,6 +49,7 @@ class MainMenuActivity : CenteredActivity() {
         optAi.setOnClickListener { showAiModeDialog() }
         optPvp.setOnClickListener { startActivity(Intent(this, PvpLobbyActivity::class.java)) }
         optProfile.setOnClickListener { startActivity(Intent(this, ProfileActivity::class.java)) }
+        optLearn.setOnClickListener { startActivity(Intent(this, LearningActivity::class.java)) }
 
         tvVersion.text = getString(R.string.version_text)
     }

@@ -103,6 +103,19 @@
             android:label="@string/profilelabel"
             android:theme="@style/Theme.ChessKel" />
 
+        <!-- Learning section activities -->
+        <activity
+            android:name="com.chesskel.ui.learn.LearningActivity"
+            android:exported="false"
+            android:label="@string/learn_to_play"
+            android:theme="@style/Theme.ChessKel" />
+
+        <activity
+            android:name="com.chesskel.ui.learn.LessonDetailActivity"
+            android:exported="false"
+            android:label="@string/learn_to_play"
+            android:theme="@style/Theme.ChessKel" />
+
     </application>
 
 </manifest>

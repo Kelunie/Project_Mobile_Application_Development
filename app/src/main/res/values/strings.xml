@@ -92,8 +92,8 @@
     <string name="invalid_credentials">Credenciales invalidas</string>
 
     <string name="theme_toggle">Theme</string>
-    <string name="switch_to_dark">Switch to dark</string>
-    <string name="switch_to_light">Switch to light</string>
+    <string name="switch_to_dark">Cambiar a Modo Oscuro</string>
+    <string name="switch_to_light">Cambiar a Modo Claro</string>
     <string name="version_text">versión 0.5</string>
 
     <!-- Profile screen strings (ES) -->
@@ -115,4 +115,51 @@
     <string name="profile_location_not_available">No se pudo obtener tu ubicación actual</string>
     <string name="profile_location_geocode_failed">No se pudo convertir la ubicación a dirección</string>
     <string name="profile_location_permission_required">Se necesita permiso de ubicación para continuar</string>
+
+    <!-- Learning section -->
+    <string name="learn_to_play">Aprender a jugar</string>
+    <string name="learning_video_coming_soon">Próximamente: video de YouTube</string>
+
+    <string name="lesson_pawn_title">Peón</string>
+    <string name="lesson_pawn_intro">El peón es la pieza más humilde, pero puede convertirse en la más poderosa si llega al final del tablero.</string>
+    <string name="lesson_pawn_body">Aquí podrás aprender cómo se mueve el peón, cómo captura, qué es el avance doble inicial y cómo funciona la promoción. También podrás ver ejemplos prácticos en video.</string>
+
+    <string name="lesson_bishop_title">Alfil</string>
+    <string name="lesson_bishop_intro">El alfil domina las diagonales y trabaja mejor en pareja.</string>
+    <string name="lesson_bishop_body">Aprende el movimiento diagonal del alfil, sus fortalezas en posiciones abiertas y cómo coordinarlo con otras piezas.</string>
+
+    <string name="lesson_knight_title">Caballo</string>
+    <string name="lesson_knight_intro">El caballo se mueve en forma de L y puede saltar sobre otras piezas.</string>
+    <string name="lesson_knight_body">Descubre patrones típicos de salto, casillas fuertes para el caballo y tácticas como el doble ataque.</string>
+
+    <string name="lesson_rook_title">Torre</string>
+    <string name="lesson_rook_intro">La torre es muy poderosa en columnas y filas abiertas.</string>
+    <string name="lesson_rook_body">Verás cómo activar tus torres, usar columnas abiertas y coordinar torres dobladas.</string>
+
+    <string name="lesson_queen_title">Reina</string>
+    <string name="lesson_queen_intro">La reina combina el poder de la torre y el alfil.</string>
+    <string name="lesson_queen_body">Aprende a usar la reina sin exponerla demasiado y a rematar ataques decisivos.</string>
+
+    <string name="lesson_king_title">Rey</string>
+    <string name="lesson_king_intro">El rey es la pieza más importante: si cae en jaque mate, la partida termina.</string>
+    <string name="lesson_king_body">Verás conceptos como el enroque, la seguridad del rey y la activación del rey en finales.</string>
+
+    <string name="lesson_moves_title">Movimientos básicos</string>
+    <string name="lesson_moves_intro">Antes de atacar, hay que saber cómo se mueve cada pieza.</string>
+    <string name="lesson_moves_body">Repaso general de los movimientos de todas las piezas, con ejemplos visuales y situaciones típicas.</string>
+
+    <string name="lesson_rules_title">Reglas básicas</string>
+    <string name="lesson_rules_intro">Conoce las reglas esenciales del ajedrez.</string>
+    <string name="lesson_rules_body">Explicación de jaque, jaque mate, tablas, ahogado, enroque, captura al paso y otras reglas fundamentales.</string>
+
+    <!-- Seccion de videos de lecciones -->
+    <string name="lesson_videos_section_title">Videos recomendados</string>
+    <string name="lesson_pawn_video1_title">Movimiento básico del peón</string>
+    <string name="lesson_bishop_video1_title">Movimiento del alfil</string>
+    <string name="lesson_knight_video1_title">Movimiento del caballo</string>
+    <string name="lesson_rook_video1_title">Movimiento de la torre</string>
+    <string name="lesson_queen_video1_title">Movimiento de la reina</string>
+    <string name="lesson_king_video1_title">Movimiento del rey</string>
+    <string name="lesson_moves_video1_title">Movimientos básicos de todas las piezas</string>
+    <string name="lesson_rules_video1_title">Reglas básicas del ajedrez</string>
 </resources>

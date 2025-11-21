@@ -92,8 +92,8 @@
     <string name="login_successful">Login successful</string>
     <string name="invalid_credentials">Invalid Credentials</string>
     <string name="theme_toggle">Tema</string>
-    <string name="switch_to_dark">Cambiar a Modo Oscuro</string>
-    <string name="switch_to_light">Cambiar a Modo Claro</string>
+    <string name="switch_to_dark">Switch to dark</string>
+    <string name="switch_to_light">Switch to light</string>
     <string name="version_text">Version %1$s</string>
 
     <!-- Profile screen strings (EN) -->
@@ -109,10 +109,58 @@
     <string name="profile_no_user">No user registered</string>
     <string name="profile_saved">Profile updated</string>
     <string name="profile_camera_not_available">Camera not available</string>
-    <string name="profile_location_no_maps">Not found any maps apps</string>
+    <string name="profile_location_no_maps">No maps application found</string>
     <string name="profile_location_button">Location</string>
     <string name="profile_location_fetching">Getting location...</string>
-    <string name="profile_location_not_available">We could not obtain your current location</string>
-    <string name="profile_location_geocode_failed">Location could not be converted to address</string>
+    <string name="profile_location_not_available">Could not get your current location</string>
+    <string name="profile_location_geocode_failed">Could not convert location to address</string>
     <string name="profile_location_permission_required">Location permission is required to continue</string>
+
+    <!-- Learning section (EN) -->
+    <string name="learn_to_play">Learn to play</string>
+    <string name="learning_video_coming_soon">Coming soon: YouTube video</string>
+
+    <string name="lesson_pawn_title">Pawn</string>
+    <string name="lesson_pawn_intro">The pawn is the most humble piece, but it can become the most powerful if it reaches the end of the board.</string>
+    <string name="lesson_pawn_body">Here you will learn how the pawn moves, how it captures, what the initial double step is, and how promotion works. You will also see practical video examples.</string>
+
+    <string name="lesson_bishop_title">Bishop</string>
+    <string name="lesson_bishop_intro">The bishop controls the diagonals and works best in pairs.</string>
+    <string name="lesson_bishop_body">Learn the bishops diagonal movement, its strengths in open positions, and how to coordinate it with other pieces.</string>
+
+    <string name="lesson_knight_title">Knight</string>
+    <string name="lesson_knight_intro">The knight moves in an L-shape and can jump over other pieces.</string>
+    <string name="lesson_knight_body">Discover typical jumping patterns, strong squares for the knight, and tactics like the fork.</string>
+
+    <string name="lesson_rook_title">Rook</string>
+    <string name="lesson_rook_intro">The rook is very powerful on open files and ranks.</string>
+    <string name="lesson_rook_body">You will see how to activate your rooks, use open files, and coordinate doubled rooks.</string>
+
+    <string name="lesson_queen_title">Queen</string>
+    <string name="lesson_queen_intro">The queen combines the power of the rook and the bishop.</string>
+    <string name="lesson_queen_body">Learn how to use the queen without overexposing it and how to finish decisive attacks.</string>
+
+    <string name="lesson_king_title">King</string>
+    <string name="lesson_king_intro">The king is the most important piece: if it is checkmated, the game is over.</string>
+    <string name="lesson_king_body">You will see concepts such as castling, king safety, and activating the king in endgames.</string>
+
+    <string name="lesson_moves_title">Basic moves</string>
+    <string name="lesson_moves_intro">Before attacking, you must know how each piece moves.</string>
+    <string name="lesson_moves_body">General review of the moves of all pieces, with visual examples and typical situations.</string>
+
+    <string name="lesson_rules_title">Basic rules</string>
+    <string name="lesson_rules_intro">Learn the essential rules of chess.</string>
+    <string name="lesson_rules_body">Explanation of check, checkmate, draw, stalemate, castling, en passant capture, and other basic rules.</string>
+
+    <!-- Lesson videos section -->
+    <string name="lesson_videos_section_title">Recommended videos</string>
+
+    <string name="lesson_pawn_video1_title">Basic pawn movements</string>
+    <string name="lesson_bishop_video1_title">Bishop movement</string>
+    <string name="lesson_knight_video1_title">Knight movement</string>
+    <string name="lesson_rook_video1_title">Rook movement</string>
+    <string name="lesson_queen_video1_title">Queen movement</string>
+    <string name="lesson_king_video1_title">King movement</string>
+    <string name="lesson_moves_video1_title">Basic moves of all pieces</string>
+    <string name="lesson_rules_video1_title">Basic chess rules</string>
 </resources>
