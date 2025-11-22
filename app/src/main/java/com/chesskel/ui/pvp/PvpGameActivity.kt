@@ -6,25 +6,28 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.chesskel.R
 import com.chesskel.game.*
 import com.chesskel.net.LanSession
 import com.chesskel.net.UdpDiscovery
 import com.chesskel.ui.game.ChessBoardView
+import com.chesskel.ui.game.MovesAdapter
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.SoundManager
 import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.theme.CenteredActivity
 
 /**
  * PvP networked game screen (LAN).
  */
-class PvpGameActivity : AppCompatActivity(), GameEventListener {
+class PvpGameActivity : CenteredActivity(), GameEventListener {
 
     private val engine = ChessEngine()
     private lateinit var chessBoard: ChessBoardView
     private lateinit var tvInfo: TextView
-    private lateinit var tvMoves: TextView
+    private lateinit var rvMoves: RecyclerView
     private lateinit var btnResign: Button
 
     private var mySide: Side? = null
@@ -42,14 +45,16 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.applySavedTheme(this)
-        setContentView(R.layout.activity_pvp_game)
+        setCenteredContentView(R.layout.activity_pvp_game)
 
         SoundManager.init(this)
 
         chessBoard = findViewById(R.id.chessBoard)
         tvInfo = findViewById(R.id.tvGameInfo)
-        tvMoves = findViewById(R.id.tvMoves)
+        rvMoves = findViewById(R.id.rvMoves)
         btnResign = findViewById(R.id.btnResign)
+
+        rvMoves.layoutManager = LinearLayoutManager(this)
 
         // Asegurar rotación 180° cuando jugamos con negras (visual y toques)
         chessBoard.rotateForBlack = true
@@ -241,6 +246,11 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
             .show()
     }
 
+    private fun updateMoves() {
+        rvMoves.adapter = MovesAdapter(movesList)
+        rvMoves.scrollToPosition(movesList.size - 1)
+    }
+
     private fun performMove(m: Move, isLocal: Boolean) {
         val my = mySide
         if (my == null) {
@@ -257,6 +267,12 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
             if (mover == '.' || moverIsWhite != iAmWhite || !isMyTurn()) {
                 Toast.makeText(this, getString(R.string.not_your_piece), Toast.LENGTH_SHORT).show()
                 return
+            }
+            // Send local move to peer
+            try {
+                lan?.sendMove(m.fromR, m.fromC, m.toR, m.toC, m.promotion)
+            } catch (e: Exception) {
+                // Log or show error
             }
         } else {
             // Remote move must come from opponent and be legal in current state
@@ -290,20 +306,10 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
 
         chessBoard.invalidate()
         movesList.add(san)
-        updateMovesText()
+        updateMoves()
         refreshUi()
 
-        if (isLocal) {
-            if (lan?.isConnected() == true) {
-                try { lan?.sendMove(m.fromR, m.fromC, m.toR, m.toC, m.promotion) } catch (e: Exception) {
-                    Toast.makeText(this, getString(R.string.send_failed_fmt, e.message ?: ""), Toast.LENGTH_LONG).show()
-                }
-            } else {
-                Toast.makeText(this, getString(R.string.peer_not_connected), Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // After sending/applying, check for end-of-game conditions once and show options
+        // Game over check
         val sideToMoveIsWhite = engine.whiteToMove
         if (engine.isCheckmate(sideToMoveIsWhite)) {
             val msg = if (!sideToMoveIsWhite) getString(R.string.white_wins) else getString(R.string.black_wins)
@@ -318,24 +324,17 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
         }
     }
 
-    private fun updateMovesText() {
-        val sb = StringBuilder()
-        var moveNumber = 1
-        var i = 0
-        while (i < movesList.size) {
-            val whiteMove = movesList[i]
-            val blackMove = if (i + 1 < movesList.size) movesList[i + 1] else ""
-
-            // Formato de tabla: "%-5s %-8s %s"
-            // Col 1: Número de jugada (5 caracteres, alineado a la izquierda)
-            // Col 2: Movimiento de blancas (8 caracteres, alineado a la izquierda)
-            // Col 3: Movimiento de negras (el resto del espacio)
-            sb.append("%-5s%-8s%s\n".format("${moveNumber}.", whiteMove, blackMove))
-
-            i += 2
-            moveNumber++
-        }
-        tvMoves.text = sb.toString()
+    private fun resetGame() {
+        rematchRequestedByMe = false
+        engine.reset()
+        movesList.clear()
+        updateMoves()
+        chessBoard.bindEngine(engine)
+        chessBoard.lastMove = null
+        // Keep same sides as negotiated initially; board side is already set via chessBoard.humanIsWhite
+        chessBoard.invalidate()
+        tvInfo.text = if (engine.whiteToMove) getString(R.string.white_to_move) else getString(R.string.black_to_move)
+        Toast.makeText(this, getString(R.string.rematch_started), Toast.LENGTH_SHORT).show()
     }
 
     private fun refreshUi() {
@@ -411,8 +410,7 @@ class PvpGameActivity : AppCompatActivity(), GameEventListener {
         engine.reset()
         // Keep same sides as negotiated initially; board side is already set via chessBoard.humanIsWhite
         chessBoard.invalidate()
-        tvMoves.text = ""
-        refreshUi()
+        tvInfo.text = if (engine.whiteToMove) getString(R.string.white_to_move) else getString(R.string.black_to_move)
         Toast.makeText(this, getString(R.string.rematch_started), Toast.LENGTH_SHORT).show()
     }
 

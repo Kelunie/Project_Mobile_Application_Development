@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:background="@drawable/bg_main_surface">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Header with back button and title -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="16dp">
+
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_toggle_button"
+                app:tint="?android:textColorPrimary"
+                android:contentDescription="@string/menu"
+                android:src="@drawable/ic_arrow_back" />
+
+            <TextView
+                android:id="@+id/tvLessonTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/lesson_pawn_title"
+                android:textAllCaps="true"
+                android:textColor="?android:textColorPrimary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.15" />
+        </LinearLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="24dp">
+
+                <TextView
+                    android:id="@+id/tvLessonIntro"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="16sp"
+                    android:text="@string/lesson_pawn_intro" />
+
+                <!-- Seccion de videos -->
+                <TextView
+                    android:id="@+id/tvVideosHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:text="@string/lesson_videos_section_title"
+                    android:textAllCaps="true"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+
+                <LinearLayout
+                    android:id="@+id/containerVideos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp" />
+
+                <!-- Texto para cuando aun no hay videos -->
+                <TextView
+                    android:id="@+id/tvNoVideos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/learning_video_coming_soon"
+                    android:textColor="@color/version_text" />
+
+                <TextView
+                    android:id="@+id/tvLessonBody"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:textColor="?android:textColorPrimary"
+                    android:textSize="15sp"
+                    android:text="@string/lesson_pawn_body" />
+
+            </LinearLayout>
+        </ScrollView>
+
+    </LinearLayout>
+
+</FrameLayout>

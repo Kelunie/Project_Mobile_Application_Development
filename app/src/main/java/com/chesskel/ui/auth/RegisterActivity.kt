@@ -6,23 +6,24 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.Security
 import com.chesskel.ui.theme.ThemeUtils
+import com.chesskel.ui.theme.CenteredActivity
 
-class RegisterActivity : AppCompatActivity() {
+class RegisterActivity : CenteredActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ThemeUtils.applySavedTheme(this)
-        setContentView(R.layout.activity_register)
+        setCenteredContentView(R.layout.activity_register)
 
 
         val etName = findViewById<EditText>(R.id.etName)
         val etEmail = findViewById<EditText>(R.id.etEmail)
         val etPassword = findViewById<EditText>(R.id.etPassword)
+        val etConfirmPassword = findViewById<EditText>(R.id.etConfirmPassword)
         val btnCreate = findViewById<Button>(R.id.btnCreate)
         val btnGoLogin = findViewById<TextView>(R.id.btnGoLogin)
         val db = DBHelper(this)
@@ -31,10 +32,17 @@ class RegisterActivity : AppCompatActivity() {
             val name = etName.text.toString().trim()
             val email = etEmail.text.toString().trim()
             val pass = etPassword.text.toString()
-            if (name.isEmpty() || email.isEmpty() || pass.isEmpty()) {
+            val confirmPass = etConfirmPassword.text.toString()
+            if (name.isEmpty() || email.isEmpty() || pass.isEmpty() || confirmPass.isEmpty()) {
                 Toast.makeText(this, getString(R.string.all_fields_required), Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
+
+            if (pass != confirmPass) {
+                Toast.makeText(this, getString(R.string.passwords_do_not_match), Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
             val id = db.insertUser(
                 nombre = name,
                 email = email,

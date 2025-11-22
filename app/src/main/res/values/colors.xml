@@ -5,6 +5,10 @@
     <color name="btn_text">#FF101114</color>
     <color name="btn_icon_tint">#FFD84343</color>
 
+    <!-- Texto principal/secundario reutilizable -->
+    <color name="text_primary">#FF101114</color>
+    <color name="text_secondary">#FF4F5563</color>
+
     <!-- Gradientes (modo claro) -->
     <color name="ai_start">#FFFAD8DB</color>
     <color name="ai_end">#FFFFFFFF</color>
@@ -26,4 +30,20 @@
 
     <!-- Footer -->
     <color name="version_text">#7A7F8C</color>
+
+    <!-- Cards / fondos de secciones -->
+    <color name="bg_card">#FFF0E6F5</color>
+
+    <!-- Botones primarios reutilizables -->
+    <color name="btn_primary_background">#FF2B1B33</color>
+    <color name="btn_primary_background_pressed">#FF3A2646</color>
+    <color name="btn_primary_text">#FFFCE8C6</color>
+    <color name="btn_primary_stroke">#FFAA5F5F</color>
+
+    <!-- Botones primarios - estados adicionales -->
+    <color name="btn_disabled_bg">#FFE4D5DD</color>
+    <color name="btn_disabled_border">#FFCCB3BF</color>
+
+    <!-- Superficies adicionales para gradientes -->
+    <color name="surface_bg_dark">#FFE2D9ED</color>
 </resources>

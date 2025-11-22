@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!-- Modo oscuro: reutiliza el diseño con borde rojo -->
+    <!-- ...existing dark style from original bg_icon_tile if needed... -->
+</shape>
+
