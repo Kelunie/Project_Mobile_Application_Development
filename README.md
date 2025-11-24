@@ -182,8 +182,3 @@ Common edge cases to test:
 See `LICENSE.txt` at the project root and keep consistency with that file.
 
 ---
-
-If you want, I can also:
-- Add screenshots and embed them in this README,
-- Add example JSON payloads used by PvP and code snippets to log/verify payloads,
-- Expand the PvP debugging section with suggested code changes to `PvpGameActivity.kt` (where to add logs and ACK messages).
