@@ -33,6 +33,7 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import com.chesskel.net.ApiClient
 
 class ProfileActivity : CenteredActivity() {
 
@@ -49,14 +50,23 @@ class ProfileActivity : CenteredActivity() {
     private lateinit var tvLocationValue: TextView
     private lateinit var btnSaveProfile: LinearLayout
     private lateinit var btnGetLocation: LinearLayout
+    private lateinit var btnLogout: LinearLayout
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result.data?.data?.let { uri ->
-                val takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                contentResolver.takePersistableUriPermission(uri, takeFlags)
+                try {
+                    // Attempt to persist permissions if provided by picker
+                    val flags = result.data?.flags ?: 0
+                    val takeFlags = flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                    if (takeFlags != 0) {
+                        contentResolver.takePersistableUriPermission(uri, takeFlags)
+                    }
+                } catch (e: Exception) {
+                    // ignore - permission may not be persistable for some pickers
+                }
                 currentProfileImageUri = uri
                 ivProfileImage.setImageURI(uri)
             }
@@ -110,13 +120,34 @@ class ProfileActivity : CenteredActivity() {
         tvLocationValue = findViewById(R.id.tvLocationValue)
         btnSaveProfile = findViewById(R.id.btnSaveProfile)
         btnGetLocation = findViewById(R.id.btnGetLocation)
+        btnLogout = findViewById(R.id.btnLogout)
 
         loadUser()
         setupListeners()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // Refresh in case current_user_id changed (register/login elsewhere)
+        loadUser()
+    }
+
     private fun loadUser() {
-        val entity = dbHelper.getFirstUser()
+        // Prefer the explicitly logged-in user id saved in SharedPreferences
+        val prefs = getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
+        val savedUserId = prefs.getLong("current_user_id", -1L)
+        var entity = if (savedUserId > 0L) dbHelper.getUserById(savedUserId) else null
+        if (entity == null) {
+            // Try fallback: if we have an email saved in prefs, load by email
+            val savedEmail = prefs.getString("current_user_email", null)
+            if (!savedEmail.isNullOrBlank()) {
+                entity = dbHelper.getUserByEmail(savedEmail)
+            }
+        }
+        if (entity == null) {
+            // Last resort: get the first user in the DB
+            entity = dbHelper.getFirstUser()
+        }
         if (entity == null) {
             Toast.makeText(this, getString(R.string.profile_no_user), Toast.LENGTH_LONG).show()
             finish()
@@ -159,6 +190,17 @@ class ProfileActivity : CenteredActivity() {
             saveProfile()
         }
 
+        btnLogout.setOnClickListener {
+            // clear current user and go to login
+            val prefs = getSharedPreferences("chesskel_prefs", MODE_PRIVATE).edit()
+            prefs.remove("current_user_id")
+            prefs.remove("current_user_email")
+            prefs.remove("current_user_name")
+            prefs.apply()
+            startActivity(Intent(this, com.chesskel.ui.auth.LoginActivity::class.java))
+            finish()
+        }
+
         btnGetLocation.setOnClickListener {
             ensureLocationPermissionAndFetch()
         }
@@ -189,9 +231,12 @@ class ProfileActivity : CenteredActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            val intent = Intent(Intent.ACTION_GET_CONTENT).apply {
-                type = "image/*"
+            // Use ACTION_OPEN_DOCUMENT to get a persistent, grantable URI from the system picker
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
                 addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+                // Request persistable permission when possible
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
             }
             pickImageLauncher.launch(intent)
         } else {
@@ -328,5 +373,19 @@ class ProfileActivity : CenteredActivity() {
 
         dbHelper.updateUserProfile(user.id, uriString, location)
         Toast.makeText(this, getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+
+        // Upsert profile by email on remote server (will update if exists or create if not)
+        lifecycleScope.launchWhenStarted {
+            try {
+                val resp = ApiClient.upsertProfileByEmail(user.email, user.name, null, uriString, location)
+                if (resp != null) {
+                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_synced_remote), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_failed), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_error), Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }

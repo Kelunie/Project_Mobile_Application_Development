@@ -90,6 +90,16 @@ class DBHelper(context: Context) :
         }
     }
 
+    // Get a user by email
+    fun getUserByEmail(email: String): UserEntity? {
+        readableDatabase.rawQuery(
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_uri,location FROM usuarios WHERE email=? LIMIT 1",
+            arrayOf(email)
+        ).use { c ->
+            return if (c.moveToFirst()) c.toUser() else null
+        }
+    }
+
     // Extension function to convert Cursor to UserEntity
     private fun Cursor.toUser(): UserEntity =
         UserEntity(

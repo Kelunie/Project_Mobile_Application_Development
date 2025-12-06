@@ -108,6 +108,10 @@
     <string name="profile_permission_denied">Permiso denegado</string>
     <string name="profile_no_user">No hay ningún usuario registrado</string>
     <string name="profile_saved">Perfil actualizado</string>
+    <string name="profile_logout">Cerrar sesión</string>
+    <string name="profile_synced_remote">Perfil sincronizado con servidor</string>
+    <string name="profile_sync_failed">No se pudo sincronizar con el servidor</string>
+    <string name="profile_sync_error">Error al sincronizar con el servidor</string>
     <string name="profile_camera_not_available">cámara no disponible</string>
     <string name="profile_location_no_maps">No se encontró ninguna aplicación de mapas instalada.</string>
     <string name="profile_location_button">Ubicación</string>
