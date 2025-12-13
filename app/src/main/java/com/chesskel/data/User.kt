@@ -4,14 +4,14 @@ data class User(
     val id: Long,
     val name: String,
     val email: String,
-    val profileImageUri: String?,
-    val location: String?
+    val profileImagePath: String? = null,
+    val location: String? = null
 )
 
 fun UserEntity.toUser(): User = User(
     id = id,
     name = nombre,
     email = email,
-    profileImageUri = profileImageUri,
+    profileImagePath = profileImagePath,
     location = location
 )

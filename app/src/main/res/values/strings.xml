@@ -120,6 +120,7 @@
     <string name="profile_location_geocode_failed">No se pudo convertir la ubicación a dirección</string>
     <string name="profile_location_permission_required">Se necesita permiso de ubicación para continuar</string>
     <string name="profile_image_access_error">No se pudo cargar la imagen de perfil. Por favor, selecciónala de nuevo.</string>
+    <string name="profile_image_save_error">Error al guardar la imagen</string>
 
     <!-- Learning section -->
     <string name="learn_to_play">Aprender a jugar</string>

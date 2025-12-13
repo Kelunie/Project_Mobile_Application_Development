@@ -17,7 +17,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.data.User
@@ -34,6 +36,7 @@ import java.io.File
 import java.io.IOException
 import java.util.Locale
 import com.chesskel.net.ApiClient
+import kotlinx.coroutines.launch
 
 class ProfileActivity : CenteredActivity() {
 
@@ -57,29 +60,36 @@ class ProfileActivity : CenteredActivity() {
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == RESULT_OK) {
             result.data?.data?.let { uri ->
-                try {
-                    // Attempt to persist permissions if provided by picker
-                    val flags = result.data?.flags ?: 0
-                    val takeFlags = flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-                    if (takeFlags != 0) {
-                        contentResolver.takePersistableUriPermission(uri, takeFlags)
-                    }
-                } catch (e: Exception) {
-                    // ignore - permission may not be persistable for some pickers
+                val localPath = saveImageToLocal(uri)
+                if (localPath != null) {
+                    pendingImagePath = localPath
+                    currentProfileImageUri = FileProvider.getUriForFile(this, "$packageName.fileprovider", File(filesDir, localPath))
+                    loadUser()
+                } else {
+                    Toast.makeText(this, R.string.profile_image_save_error, Toast.LENGTH_SHORT).show()
                 }
-                currentProfileImageUri = uri
-                ivProfileImage.setImageURI(uri)
             }
         }
     }
 
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && tempCameraImageUri != null) {
-            currentProfileImageUri = tempCameraImageUri
-            ivProfileImage.setImageURI(tempCameraImageUri)
+            // La cámara YA guardó la imagen en filesDir/profile_images/{id}.jpg
+            val localPath = "profile_images/${currentUser?.id}.jpg"
+
+            pendingImagePath = localPath
+            currentProfileImageUri = FileProvider.getUriForFile(
+                this,
+                "$packageName.fileprovider",
+                File(filesDir, localPath)
+            )
+
+            loadUser()
         } else {
-            tempCameraImageUri = null
+            Toast.makeText(this, R.string.profile_image_save_error, Toast.LENGTH_SHORT).show()
         }
+
+        tempCameraImageUri = null
     }
 
     private enum class PendingPermissionAction { NONE, CAMERA, LOCATION }
@@ -102,6 +112,8 @@ class ProfileActivity : CenteredActivity() {
             }
         }
     }
+
+    private var pendingImagePath: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -162,21 +174,16 @@ class ProfileActivity : CenteredActivity() {
         tvUserEmailValue.text = currentUser?.email
         tvLocationValue.text = currentUser?.location ?: getString(R.string.profile_location_hint)
 
-        currentUser?.profileImageUri?.let { uriString ->
-            try {
-                val uri = Uri.parse(uriString)
-                // Check if we can still read the URI.
-                contentResolver.openInputStream(uri)?.close()
-                currentProfileImageUri = uri
-                ivProfileImage.setImageURI(uri)
-            } catch (e: SecurityException) {
-                // This can happen if the URI permission is lost.
-                // Clear the invalid URI from the database.
-                currentUser?.let { user ->
-                    dbHelper.updateUserProfile(user.id, null, user.location)
+        // Load image: prioritize selected image, then from DB
+        if (currentProfileImageUri != null) {
+            Glide.with(this).load(currentProfileImageUri).skipMemoryCache(true).diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE).into(ivProfileImage)
+        } else {
+            currentUser?.profileImagePath?.let { relativePath ->
+                val file = File(filesDir, relativePath)
+                if (file.exists()) {
+                    val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
+                    Glide.with(this).load(uri).skipMemoryCache(true).diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE).into(ivProfileImage)
                 }
-                // Optionally, show a toast to the user.
-                Toast.makeText(this, getString(R.string.profile_image_access_error), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -231,13 +238,8 @@ class ProfileActivity : CenteredActivity() {
         }
 
         if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            // Use ACTION_OPEN_DOCUMENT to get a persistent, grantable URI from the system picker
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                addCategory(Intent.CATEGORY_OPENABLE)
-                type = "image/*"
-                // Request persistable permission when possible
-                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION
-            }
+            // Use ACTION_PICK to open the gallery
+            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             pickImageLauncher.launch(intent)
         } else {
             pendingPermissionAction = PendingPermissionAction.NONE
@@ -257,8 +259,8 @@ class ProfileActivity : CenteredActivity() {
     }
 
     private fun launchCamera() {
-        val imagesDir = File(cacheDir, "images").apply { mkdirs() }
-        val imageFile = File.createTempFile("profile_", ".jpg", imagesDir)
+        val imagesDir = File(filesDir, "profile_images").apply { mkdirs() }
+        val imageFile = File(imagesDir, "${currentUser?.id ?: "temp"}.jpg")
 
         val authority = "$packageName.fileprovider"
         val uri = FileProvider.getUriForFile(this, authority, imageFile)
@@ -369,23 +371,65 @@ class ProfileActivity : CenteredActivity() {
         val user = currentUser ?: return
         val locationText = tvLocationValue.text.toString().trim()
         val location = locationText.takeIf { it.isNotEmpty() && it != getString(R.string.profile_location_hint) }
-        val uriString = currentProfileImageUri?.toString()
 
-        dbHelper.updateUserProfile(user.id, uriString, location)
-        Toast.makeText(this, getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+        var localPath: String? = user.profileImagePath
+        val isNewImage = pendingImagePath != null
 
-        // Upsert profile by email on remote server (will update if exists or create if not)
-        lifecycleScope.launchWhenStarted {
-            try {
-                val resp = ApiClient.upsertProfileByEmail(user.email, user.name, null, uriString, location)
-                if (resp != null) {
-                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_synced_remote), Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_failed), Toast.LENGTH_SHORT).show()
+        if (isNewImage) {
+            localPath = pendingImagePath
+        }
+
+        lifecycleScope.launch {
+            val profileImageUrl: String? = if (isNewImage && currentProfileImageUri != null) {
+                val remoteUser = ApiClient.getUserByEmail(user.email)
+                val remoteId = remoteUser?.optLong("id", -1L) ?: -1L
+                if (remoteId == -1L) {
+                    Toast.makeText(this@ProfileActivity, "Unable to get remote user ID", Toast.LENGTH_SHORT).show()
+                    return@launch
                 }
-            } catch (e: Exception) {
-                Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_error), Toast.LENGTH_SHORT).show()
+                val (url, error) = ApiClient.uploadImage(this@ProfileActivity, currentProfileImageUri!!, remoteId)
+                if (url == null) {
+                    Toast.makeText(this@ProfileActivity, "Upload failed: ${error ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                url
+            } else {
+                null
             }
+
+            dbHelper.updateUserProfile(user.id, localPath, location)
+            Toast.makeText(this@ProfileActivity, getString(R.string.profile_saved), Toast.LENGTH_SHORT).show()
+
+            pendingImagePath = null
+            currentProfileImageUri = null
+            loadUser()
+
+            if (isNewImage && profileImageUrl != null) {
+                try {
+                    ApiClient.upsertProfileByEmail(user.email, user.name, null, profileImageUrl, location)
+                } catch (e: Exception) {
+                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_error), Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun saveImageToLocal(uri: Uri): String? {
+        val user = currentUser ?: return null
+        val imagesDir = File(filesDir, "profile_images").apply { mkdirs() }
+        val imageFile = File(imagesDir, "${user.id}.jpg")
+        // Delete old image if exists
+        if (imageFile.exists()) imageFile.delete()
+        try {
+            contentResolver.openInputStream(uri)?.use { input ->
+                imageFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            return "profile_images/${user.id}.jpg"
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
         }
     }
 }
