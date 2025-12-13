@@ -13,12 +13,13 @@ data class UserEntity(
     val nombre: String,
     val email: String,
     val profileImagePath: String?,
-    val location: String?
+    val location: String?,
+    val profileImageUrl: String?
 )
 
 // DBHelper class
 class DBHelper(context: Context) :
-    SQLiteOpenHelper(context, "chesskel.db", null, 2) { // version bumped to 2
+    SQLiteOpenHelper(context, "chesskel.db", null, 3) { // version bumped to 3
 
     // Create  table if not exists
     override fun onCreate(db: SQLiteDatabase) {
@@ -31,7 +32,8 @@ class DBHelper(context: Context) :
                 password_hash TEXT NOT NULL,
                 created_at INTEGER NOT NULL,
                 profile_image_path TEXT,
-                location TEXT
+                location TEXT,
+                profile_image_url TEXT
             )
             """.trimIndent()
         )
@@ -42,6 +44,9 @@ class DBHelper(context: Context) :
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE usuarios ADD COLUMN profile_image_path TEXT")
             db.execSQL("ALTER TABLE usuarios ADD COLUMN location TEXT")
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE usuarios ADD COLUMN profile_image_url TEXT")
         }
     }
 
@@ -55,6 +60,7 @@ class DBHelper(context: Context) :
             // Nuevos campos: inicialmente null
             putNull("profile_image_path")
             putNull("location")
+            putNull("profile_image_url")
         }
         return writableDatabase.insert("usuarios", null, values)
     }
@@ -68,10 +74,18 @@ class DBHelper(context: Context) :
         writableDatabase.update("usuarios", values, "id=?", arrayOf(id.toString()))
     }
 
+    // Update user profile image URL
+    fun updateUserProfileImageUrl(id: Long, profileImageUrl: String?) {
+        val values = ContentValues().apply {
+            if (profileImageUrl != null) put("profile_image_url", profileImageUrl) else putNull("profile_image_url")
+        }
+        writableDatabase.update("usuarios", values, "id=?", arrayOf(id.toString()))
+    }
+
     // Get first user from the table
     fun getFirstUser(): UserEntity? {
         readableDatabase.rawQuery(
-            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location FROM usuarios ORDER BY id LIMIT 1",
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location,profile_image_url FROM usuarios ORDER BY id LIMIT 1",
             null
         ).use { c ->
             return if (c.moveToFirst()) c.toUser() else null
@@ -81,7 +95,7 @@ class DBHelper(context: Context) :
     // Get a user by id
     fun getUserById(id: Long): UserEntity? {
         readableDatabase.rawQuery(
-            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location FROM usuarios WHERE id=? LIMIT 1",
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location,profile_image_url FROM usuarios WHERE id=? LIMIT 1",
             arrayOf(id.toString())
         ).use { c ->
             return if (c.moveToFirst()) c.toUser() else null
@@ -91,7 +105,7 @@ class DBHelper(context: Context) :
     // Get a user by email
     fun getUserByEmail(email: String): UserEntity? {
         readableDatabase.rawQuery(
-            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location FROM usuarios WHERE email=? LIMIT 1",
+            "SELECT id,nombre,email,password_hash,created_at,profile_image_path,location,profile_image_url FROM usuarios WHERE email=? LIMIT 1",
             arrayOf(email)
         ).use { c ->
             return if (c.moveToFirst()) c.toUser() else null
@@ -105,6 +119,7 @@ class DBHelper(context: Context) :
             nombre = getString(getColumnIndexOrThrow("nombre")),
             email = getString(getColumnIndexOrThrow("email")),
             profileImagePath = getString(getColumnIndexOrThrow("profile_image_path")).takeUnless { it.isNullOrEmpty() },
-            location = getString(getColumnIndexOrThrow("location")).takeUnless { it.isNullOrEmpty() }
+            location = getString(getColumnIndexOrThrow("location")).takeUnless { it.isNullOrEmpty() },
+            profileImageUrl = getString(getColumnIndexOrThrow("profile_image_url")).takeUnless { it.isNullOrEmpty() }
         )
 }

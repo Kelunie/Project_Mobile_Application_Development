@@ -183,7 +183,12 @@ class ProfileActivity : CenteredActivity() {
                 if (file.exists()) {
                     val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
                     Glide.with(this).load(uri).skipMemoryCache(true).diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE).into(ivProfileImage)
+                } else {
+                    loadRemoteProfileImage()
                 }
+            } ?: run {
+                // No local path, try remote
+                loadRemoteProfileImage()
             }
         }
     }
@@ -370,7 +375,15 @@ class ProfileActivity : CenteredActivity() {
     private fun saveProfile() {
         val user = currentUser ?: return
         val locationText = tvLocationValue.text.toString().trim()
-        val location = locationText.takeIf { it.isNotEmpty() && it != getString(R.string.profile_location_hint) }
+        val invalidLocationTexts = setOf(
+            getString(R.string.profile_location_hint),
+            getString(R.string.profile_location_fetching)
+        )
+        val location: String? = if (locationText.isBlank() || invalidLocationTexts.contains(locationText)) {
+            null
+        } else {
+            locationText
+        }
 
         var localPath: String? = user.profileImagePath
         val isNewImage = pendingImagePath != null
@@ -380,19 +393,36 @@ class ProfileActivity : CenteredActivity() {
         }
 
         lifecycleScope.launch {
-            val profileImageUrl: String? = if (isNewImage && currentProfileImageUri != null) {
+            val existingRemoteImageUrl = currentUser?.profileImageUrl ?: withContext(Dispatchers.IO) {
                 val remoteUser = ApiClient.getUserByEmail(user.email)
-                val remoteId = remoteUser?.optLong("id", -1L) ?: -1L
-                if (remoteId == -1L) {
-                    Toast.makeText(this@ProfileActivity, "Unable to get remote user ID", Toast.LENGTH_SHORT).show()
-                    return@launch
+                remoteUser?.optString("profileImageUrl", null)?.also { url ->
+                    dbHelper.updateUserProfileImageUrl(user.id, url)
                 }
-                val (url, error) = ApiClient.uploadImage(this@ProfileActivity, currentProfileImageUri!!, remoteId)
-                if (url == null) {
-                    Toast.makeText(this@ProfileActivity, "Upload failed: ${error ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
-                    return@launch
+            }
+            currentUser?.profileImageUrl = existingRemoteImageUrl
+
+            var finalProfileImageUrl: String? = existingRemoteImageUrl
+
+            val profileImageUrl: String? = if (localPath != null) {
+                val file = File(filesDir, localPath)
+                if (file.exists()) {
+                    val uri = FileProvider.getUriForFile(this@ProfileActivity, "$packageName.fileprovider", file)
+                    val remoteUser = ApiClient.getUserByEmail(user.email)
+                    val remoteId = remoteUser?.optLong("id", -1L) ?: -1L
+                    if (remoteId == -1L) {
+                        Toast.makeText(this@ProfileActivity, "Unable to get remote user ID", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                    val (url, error) = ApiClient.uploadImage(this@ProfileActivity, uri, remoteId)
+                    if (url == null) {
+                        Toast.makeText(this@ProfileActivity, "Upload failed: ${error ?: "Unknown error"}", Toast.LENGTH_SHORT).show()
+                        return@launch
+                    }
+                    finalProfileImageUrl = url
+                    url
+                } else {
+                    null
                 }
-                url
             } else {
                 null
             }
@@ -404,12 +434,16 @@ class ProfileActivity : CenteredActivity() {
             currentProfileImageUri = null
             loadUser()
 
-            if (isNewImage && profileImageUrl != null) {
-                try {
-                    ApiClient.upsertProfileByEmail(user.email, user.name, null, profileImageUrl, location)
-                } catch (e: Exception) {
-                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_error), Toast.LENGTH_SHORT).show()
+            // Upsert to remote
+            try {
+                val resp = ApiClient.upsertProfileByEmail(user.email, user.name, null, finalProfileImageUrl, location)
+                if (resp != null) {
+                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_synced_remote), Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_failed), Toast.LENGTH_SHORT).show()
                 }
+            } catch (e: Exception) {
+                Toast.makeText(this@ProfileActivity, getString(R.string.profile_sync_error), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -430,6 +464,27 @@ class ProfileActivity : CenteredActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             return null
+        }
+    }
+
+    private fun loadRemoteProfileImage() {
+        currentUser?.email?.let { email ->
+            lifecycleScope.launch {
+                try {
+                    val remoteUser = ApiClient.getUserByEmail(email)
+                    val imageUrl = remoteUser?.optString("profileImageUrl", null)
+
+                    if (!imageUrl.isNullOrBlank()) {
+                        Glide.with(this@ProfileActivity)
+                            .load(imageUrl)
+                            .skipMemoryCache(true)
+                            .diskCacheStrategy(com.bumptech.glide.load.engine.DiskCacheStrategy.NONE)
+                            .into(ivProfileImage)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
         }
     }
 }

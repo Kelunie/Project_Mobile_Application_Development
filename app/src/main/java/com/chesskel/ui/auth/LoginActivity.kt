@@ -88,6 +88,9 @@ class LoginActivity : CenteredActivity() {
                         db.updateUserProfile(localId, existingPath, remoteLocation)
                     }
 
+                    // Save the remote profileImageUrl
+                    db.updateUserProfileImageUrl(localId, remoteProfileImageUrl)
+
                     getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
                         .edit().putLong("current_user_id", localId).apply()
                     // Also persist email and name for fallback lookups

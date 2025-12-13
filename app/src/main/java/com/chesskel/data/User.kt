@@ -5,7 +5,8 @@ data class User(
     val name: String,
     val email: String,
     val profileImagePath: String? = null,
-    val location: String? = null
+    val location: String? = null,
+    var profileImageUrl: String? = null
 )
 
 fun UserEntity.toUser(): User = User(
@@ -13,5 +14,6 @@ fun UserEntity.toUser(): User = User(
     name = nombre,
     email = email,
     profileImagePath = profileImagePath,
-    location = location
+    location = location,
+    profileImageUrl = profileImageUrl
 )

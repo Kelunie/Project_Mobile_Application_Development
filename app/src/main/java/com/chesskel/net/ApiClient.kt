@@ -150,11 +150,13 @@ object ApiClient {
 
     suspend fun upsertProfileByEmail(email: String, nombre: String?, passwordHash: String?, profileImageUrl: String?, location: String?): JSONObject? {
         val json = JSONObject().apply {
-            put("profileImageUrl", profileImageUrl ?: JSONObject.NULL)
-            put("location", location ?: JSONObject.NULL)
+            if (profileImageUrl != null) put("profileImageUrl", profileImageUrl)
+            if (location != null) put("location", location)
             if (nombre != null) put("nombre", nombre)
             if (passwordHash != null) put("passwordHash", passwordHash)
         }
+        // If no fields to update, don't make the request
+        if (json.length() == 0) return null
         val enc = URLEncoder.encode(email, "utf-8")
         val (code, body) = httpRequest("/users/by-email/$enc/profile", "PATCH", json.toString())
         if (code in 200..299 && body != null) return JSONObject(body)
