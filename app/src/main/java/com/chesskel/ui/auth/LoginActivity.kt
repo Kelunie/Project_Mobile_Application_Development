@@ -73,9 +73,19 @@ class LoginActivity : CenteredActivity() {
                     // Update local profile with remote data
                     if (remoteProfileImageUrl != null) {
                         val imagePath = downloadAndSaveImage(remoteProfileImageUrl, localId)
-                        db.updateUserProfile(localId, imagePath, remoteLocation)
+                        if (imagePath != null) {
+                            db.updateUserProfile(localId, imagePath, remoteLocation)
+                        } else {
+                            // Keep existing image if download failed
+                            val existingUser = db.getUserById(localId)
+                            val existingPath = existingUser?.profileImagePath
+                            db.updateUserProfile(localId, existingPath, remoteLocation)
+                        }
                     } else {
-                        db.updateUserProfile(localId, null, remoteLocation)
+                        // Keep existing image, only update location
+                        val existingUser = db.getUserById(localId)
+                        val existingPath = existingUser?.profileImagePath
+                        db.updateUserProfile(localId, existingPath, remoteLocation)
                     }
 
                     getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
@@ -131,7 +141,7 @@ class LoginActivity : CenteredActivity() {
                 imageFile.outputStream().use { output ->
                     input.copyTo(output)
                 }
-                imageFile.absolutePath
+                "profile_images/${userId}.jpg"
             } catch (e: Exception) {
                 e.printStackTrace()
                 null
