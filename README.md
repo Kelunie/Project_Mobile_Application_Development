@@ -1,189 +1,212 @@
-# ChessKel - Mobile Chess Application
+# ChessKel — Android Chess App
 
-![ChessKel Logo](https://github.com/Kelunie/Desarrollo_de_Aplicaciones_para_Dispositivos_M-viles/blob/main/Semana_4/505c07b1-38f0-4a5f-bc38-ca62de98bafe.jpeg)
-
-## Project Overview
-
-**Course:** Mobile Application Development  
-**Project:** ChessKel  
-**Author / Student:** Ing. Caleb Rodríguez
-
-### Short description
-A complete chess application for Android that allows users to create profiles, register their location, and play matches against a local AI or an opponent on the same LAN. The app manages user and match information locally using SQLite and includes lessons, PvP networking, and a move history UI.
-
----
+A lightweight Android chess app with local gameplay (AI), LAN PvP, lessons, and simple user profiles. This README is updated to reflect the current state of the project and its integration with a minimal Express API hosted in Azure.
 
 ## Table of contents
-- Introduction
-- Features
-- How it is built
-- Project structure and key files
-- Important resources and assets
-- Build & run (Windows / PowerShell)
-- How to test main features
-- PvP debugging notes (known issues)
-- Functional contract & edge cases
-- Notable changes since the original README
-- Recommended next steps
-- Contributing
-- License
+- Project summary
+- What changed (short)
+- App architecture (high level)
+- Azure API (endpoints and behavior)
+- Profile sync behavior (what the app does)
+- Known limitations (images, remote ids)
+- Build & run (Android app)
+- Quick API test commands (PowerShell)
+- How to verify profile sync from the app
+- Troubleshooting & debugging tips
+- Next steps / recommendations
 
 ---
 
-## Introduction
+## Project summary
 
-ChessKel is an Android chess app written in Kotlin that provides:
-- Play vs AI (multiple modes),
-- Local PvP over LAN (host / join),
-- Lessons with YouTube links,
-- User profiles with optional geolocation,
-- Move history with a RecyclerView and audio feedback,
-- Light/dark theme support and consistent UI styling.
+ChessKel is an Android chess application written in Kotlin. It includes:
+- Single-player vs AI (multiple difficulty options)
+- LAN PvP (host / join) using sockets
+- Lessons with video links
+- User profiles stored locally (SQLite) and optionally synced with a remote API
+- Move history using a RecyclerView (MovesAdapter)
+- Light/dark theme and basic styling
 
-The app primarily uses Android Views and AndroidX components. It focuses on keeping logic modular (game engine, UI, persistence, networking).
+This repository contains the Android app. A minimal Express API (separate project) is used to persist user profiles remotely; that API is deployed on Azure and can be used by the app.
 
-## Features
+---
 
-- Single-player vs AI (random/basic or Minimax-based modes).
-- Local multiplayer (PvP) via sockets on the same local network.
-- Lessons with embedded YouTube links and lesson details.
-- Profile creation, editing and local persistence (SQLite).
-- Move history shown using a `RecyclerView` with an adapter (`MovesAdapter`).
-- Sound effects for move, capture, check, and game over (`SoundManager`).
-- Theme persistence and utilities (`ThemeUtils`).
-- Donation menu entry (PayPal) with a vector icon showing the `$` symbol (`ic_donations.xml`).
+## What changed since the original README
+- The app now integrates with a remote API hosted on Azure for user/profile sync.
+- `ProfileActivity` persists and syncs profile data with the API using an "upsert by email" endpoint (`PATCH /users/by-email/:email/profile`).
+- Image selection from the gallery now uses the system picker (ACTION_OPEN_DOCUMENT) and attempts to persist URI permissions so gallery images don't crash the app on reload.
+- Profile loading now respects the logged-in user (reads `current_user_id` and `current_user_email` from SharedPreferences) so the Profile screen shows the active user's data instead of always showing the first DB row.
+- Donation icon updated to use a visible `$` vector drawable (light/dark aware).
+- The moves list was migrated to RecyclerView to avoid UI issues when the move history grows.
 
-## How it is built
+---
 
-The project follows a modular layered architecture for maintainability:
+## App architecture (high level)
+- UI: Activities and XML layouts (menu, profile, game, PvP, lessons).
+- Game: `ChessEngine` and related classes perform rules, move generation and validation.
+- Persistence: local SQLite via `DBHelper` (file: `app/src/main/java/com/chesskel/data/DHelper.kt`).
+- Networking (app->server): small HTTP client in `ApiClient.kt` calling the Azure API.
+- PvP: local LAN sockets (see `LanSession` and `PvpGameActivity`).
 
-- UI / Screens: Activities and layouts (menus, profile, game board, PvP screens).
-- Domain / Game: Chess logic, rules, move generation and validation.
-- Persistence: SQLite (`DBHelper` style helpers) for users and game history.
-- Communication / Networking: Simple TCP socket client/server for LAN PvP.
+Key Android files:
+- `ProfileActivity.kt` — profile UI and save/sync logic
+- `LoginActivity.kt` / `RegisterActivity.kt` — auth flows (local + remote attempts)
+- `ApiClient.kt` — small HttpURLConnection-based client used to call the Azure API
 
-Core technologies: Kotlin, Android SDK (View system), AndroidX, RecyclerView.
+---
 
-## Project structure and key files
+## Azure API (deployed endpoint)
+Base URL (example Azure deployment used while developing):
 
-Important packages and files (paths relative to `app/src/main`):
+https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net
 
-- `java/com/chesskel/ui/menu/MainMenuActivity.kt` — main menu activity.
-- `java/com/chesskel/ui/game/GameActivity.kt` — local game (AI / single device).
-- `java/com/chesskel/ui/pvp/PvpLobbyActivity.kt` — PvP lobby (host / join).
-- `java/com/chesskel/ui/pvp/PvpGameActivity.kt` — PvP game activity (send/receive moves).
-- `java/com/chesskel/ui/profile/ProfileActivity.kt` — profile screen.
-- `java/com/chesskel/ui/learn/LessonDetailActivity.kt` — lesson details and videos.
-- `java/com/chesskel/ui/game/MovesAdapter.kt` — `RecyclerView` adapter that displays move history.
-- `java/com/chesskel/game/` — chess engine, move models and game events (e.g. `ChessEngine`, `Move`, `GameResult`).
-- `java/com/chesskel/ui/game/ChessBoardView.kt` — custom board view that draws the board and pieces and handles gestures.
-- `java/com/chesskel/util/SoundManager.kt` — audio handling for game events.
-- `java/com/chesskel/ui/theme/ThemeUtils.kt` — theme utilities and persistence.
+Endpoints (server behavior):
+- GET /health — health check
+- POST /users — create user
+  - body: `{ "nombre": string, "email": string, "passwordHash": string }`
+  - returns 201 + user shape
+- GET /users/:id — get user by id
+- GET /users/by-email/:email — get user by email
+- PATCH /users/:id/profile — update profile fields for an id
+- PATCH /users/by-email/:email/profile — upsert profile by email: if user exists it updates, otherwise it creates a minimal user and applies the profile fields
+- POST /auth/login — login using email + passwordHash (returns user shape if match)
 
-Layouts and resources:
+Server response shape (used by the app):
+```
+{
+  "id": 1,
+  "name": "Nombre",
+  "email": "email@example.com",
+  "profileImageUri": null,
+  "location": "Country / State / City"
+}
+```
 
-- `res/layout/activity_main_menu.xml` — main menu layout (includes "Donate via PayPal").
-- `res/layout/activity_game.xml`, `res/layout/activity_pvp_game.xml` — game screens.
-- `res/layout/activity_pvp_lobby.xml` — PvP lobby.
-- `res/layout/item_move.xml` — layout for each row in the move list (used by `MovesAdapter`).
-- `res/layout/centered_container.xml` — container used to center screen contents (`gravity="center"`).
-- `res/drawable/ic_donations.xml` — donation icon (vector showing `$`) with color that adapts to light/dark themes when necessary.
-- `res/drawable/bg_btn_primary*.xml` — button background selectors (normal/pressed/disabled).
+Notes about the upsert endpoint:
+- The app calls `PATCH /users/by-email/:email/profile` with a JSON body containing `profileImageUri` and `location` (and optionally `nombre` / `passwordHash` for creation).
+- The server will respond with 200 (updated) or 201 (created + profile applied).
 
-## Important resources and assets
+---
 
-- `ic_donations.xml` — vector drawable updated to a visible `$` symbol for both light and dark themes. Check `res/drawable` and `res/drawable-night` if the icon does not appear correctly.
-- `item_move.xml` + `MovesAdapter` — controls display of moves. The adapter currently truncates or constrains move text so each section fits the UI (requirement: 6-character limit per section). Also the numbering column uses fixed spacing.
-- `centered_container.xml` — wrapper layout to center screens with `gravity="center"`.
+## Profile sync behavior (what the app does)
+When the user taps "Save changes" in the Profile screen:
+1. The app saves profileImageUri and location locally in SQLite (via `DBHelper.updateUserProfile`).
+2. The app calls the remote upsert endpoint: `PATCH /users/by-email/{email}/profile`.
+   - If the user exists on the server the server updates the profile and returns 200.
+   - If the user does not exist, the server creates a minimal user and then applies the profile and returns 201.
+3. The app shows a Toast with the result (synced or failed). The local DB always stores the changes regardless of network outcome.
 
-## Build & run (Windows / PowerShell)
+Important: the app sends the image as a URI string (for example: `content://...` or a FileProvider URI). The server only stores this string — it does not receive the image binary. See "Known limitations" below.
 
+---
+
+## Known limitations and important notes
+- Image sync: the app currently sends the profile image as a URI string. If the URI is a device-local content:// URI, the server cannot access the binary data or serve it to other clients. To make profile pictures available across devices you need:
+  - an upload endpoint on the server that accepts multi-part file uploads and stores the file in shared storage (e.g. Azure Blob Storage), or
+  - the app to upload the image to a storage service and send the resulting public URL to the server as `profileImageUri`.
+
+- Remote id: the app uses email-based upsert for robustness and does not store the remote numeric id in the local DB. If you want quicker syncs and fewer lookups, consider storing the server id locally (and updating it at registration/login time).
+
+- Concurrency/race: the upsert endpoint handles a race where two clients try to create the same email by catching UNIQUE errors and re-applying the update.
+
+- Permissions: gallery URIs require persisted URI permission (the app now attempts to call `takePersistableUriPermission`). On some pickers this is not available — the app catches that and still shows the selected image for the session.
+
+---
+
+## Build & run (Android app)
 Requirements:
-- Android Studio (recommended) or command-line Gradle setup,
-- JDK 11+,
-- Android SDK matching the project's `compileSdk`.
+- Android Studio (recommended) or command-line Gradle
+- JDK 11+
+- Android SDK matching the project's compile/target SDK
 
-From project root (PowerShell):
+From the project root (Windows / PowerShell):
 
 ```powershell
 # Build debug APK
 .\gradlew assembleDebug
 
-# Install debug APK on a connected device or running emulator
+# Install debug APK on a connected device or emulator
 .\gradlew installDebug
 ```
 
-You can also open the project in Android Studio and Run from the IDE.
+Open the project in Android Studio for debugging and Logcat output.
 
-## How to test main features
+---
 
-- Main menu: open app and choose Play vs AI, PvP, Learn, or Profile.
-- Donate: check the "Donate via PayPal" row in the main menu; the icon should show a `$` symbol. If invisible, confirm `res/drawable/ic_donations.xml` and `-night` variants exist.
-- Local game (AI): confirm moves update on the board and the moves list fills as the game progresses.
-- PvP: host on one device and join from another on the same LAN. Make moves and confirm the other device receives and applies them.
-- Lessons: open a lesson and tap to open video links (YouTube).
+## Quick API test commands (PowerShell)
+Replace `<your-app>` with your actual Azure host if different.
 
-## PvP debugging notes (known issue)
-
-Reported symptom: "In PvP I make the first move but it doesn't show on the other device; however, resign is recognized on the other device."
-
-Possible causes and diagnostic steps:
-1. Network connectivity: ensure both devices are on the same Wi‑Fi and reachable (same subnet). Test connectivity with `ping` or simple socket test.
-2. Logging: add `Log.d` statements in `PvpGameActivity.kt` where moves are sent and where incoming moves are handled. Compare logs for `move` vs `resign` handling since `resign` reaches the peer.
-3. Payload format: log the exact JSON/string payload sent and received (for example `{ "from":"e2", "to":"e4", ... }`). A malformed payload may be ignored by the parser.
-4. Threading / UI update: ensure received moves are applied on the UI thread (use `runOnUiThread { ... }`). If the receiver doesn't apply the move because it believes it's not the receiver's turn, verify turn/state logic.
-5. ACK / confirmation: implement a simple ACK message for moves so the sender can know the peer received and applied the move. This helps differentiate between "not received" and "received but not applied".
-
-Quick logging tip (Android Studio / adb):
-
+- Health check:
 ```powershell
-# Filter logs for PvP activity and project tags
-adb logcat -s PvpGameActivity:* Chesskel:*
+Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/health" -Method GET
 ```
 
-## Functional contract & edge cases
+- Create user (example):
+```powershell
+Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users" -Method POST -ContentType "application/json" -Body (@{
+  nombre = "Pepe"
+  email = "test02@example.com"
+  passwordHash = "HASH_FROM_APP"
+} | ConvertTo-Json)
+```
 
-Contract (brief):
-- Inputs: moves (origin/destination, promotion info), UI commands (resign, undo), mode selection (AI/PvP).
-- Outputs: board state updates, moves list (RecyclerView), game end messages, audio events.
-- Error modes: malformed move payloads, network disconnects, inconsistent game state.
+- Upsert profile by email (create or update profile):
+```powershell
+$body = @{
+  profileImageUri = "content://some/uri"
+  location = "Costa Rica / San José / Cantón"
+  nombre = "Pepe"            # optional (used if creating)
+  passwordHash = ""         # optional
+} | ConvertTo-Json
 
-Common edge cases to test:
-- Pawn promotion handling,
-- Castling (king/rook moves),
-- Ambiguous moves and disambiguation in notation,
-- Very long move history (now handled by RecyclerView for performance).
+Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users/by-email/test02@example.com/profile" -Method PATCH -ContentType "application/json" -Body $body
+```
 
-## Notable changes since the original README
+- Get user by email (verify profile fields):
+```powershell
+Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users/by-email/test02@example.com" -Method GET
+```
 
-- UI: screens and content were standardized to be centered using `centered_container.xml` and `gravity="center"`.
-- Buttons: primary button drawables were added/updated (`bg_btn_primary*`).
-- Donation icon: replaced with a vector `$` icon to improve visibility in light/dark themes (`ic_donations.xml`).
-- Moves list: migrated to `RecyclerView` with `MovesAdapter` to fix bugs when move count grows large.
-- Login/register visuals: improved contrast for text and buttons to enhance readability.
+---
 
-## Recommended next steps
+## How to verify profile sync from the app
+1. Create a user in the app (Register) or login.
+2. Open Profile, choose an image from the gallery and set a location.
+3. Tap "Save changes": the app will show a Toast saying it saved locally and another Toast for the remote sync result.
+4. Use the GET /users/by-email/:email endpoint (PowerShell example above) to confirm `profileImageUri` and `location` changed on the server.
 
-- Add unit tests for the chess engine (`ChessEngine`) covering move legality, check/checkmate and draws.
-- Improve PvP synchronization: add ACKs, structured logs, payload validation and retry logic.
-- Accessibility improvements: text sizes, contrast checks and content descriptions for important icons (e.g. donation icon).
-- Add screenshots to README to help contributors and testers.
-- Add linting/formatting (ktlint) and a simple CI pipeline.
+If the GET shows the new location and the `profileImageUri` string you sent, the upsert worked. Remember the `profileImageUri` is a reference string — the server does not host the image itself unless you implement file upload.
+
+---
+
+## Troubleshooting & debugging tips
+- If Profile shows the wrong user after registering a new account, confirm that `current_user_id` and `current_user_email` were written to SharedPreferences. You can add temporary `Log.d` statements in `ProfileActivity.loadUser()` to inspect values.
+- If the app crashes when opening the saved gallery image after restart, confirm the picker grants persistable URI permission; otherwise reselect the image and the app will store a usable URI for the session.
+- For PvP issues: compare logs on both devices and inspect the payload format and acknowledgements. The app includes `PvpGameActivity` and `LanSession` for reference.
+
+---
+
+## Next steps / recommendations
+- Implement an image upload endpoint in the API and make the app upload profile pictures (store and send a public URL).
+- Persist the remote user id locally to speed up syncs and reduce lookups.
+- Add UI indicators while syncing (progress spinner) and retry logic for failed syncs.
+- Add unit tests for `ChessEngine` and integration tests for profile sync.
+
+---
 
 ## Contributing
+1. Fork the repo and create a branch with `feature/` or `fix/` prefix.
+2. Run and test locally before opening a PR.
+3. Describe changes clearly and how to reproduce.
 
-1. Fork the repository.
-2. Create a branch with `feature/` or `fix/` prefix.
-3. Run builds and tests locally before making a pull request.
-4. Describe changes and reproduction steps in the PR.
+---
 
 ## License
-
-See `LICENSE.txt` at the project root and keep consistency with that file.
+See `LICENSE.txt` in the project root.
 
 ---
 
 If you want, I can also:
-- Add screenshots and embed them in this README,
-- Add example JSON payloads used by PvP and code snippets to log/verify payloads,
-- Expand the PvP debugging section with suggested code changes to `PvpGameActivity.kt` (where to add logs and ACK messages).
+- Add screenshots to the README,
+- Add an example of how to implement an image upload endpoint (server + client example), or
+- Add small tests validating the profile loading logic in `ProfileActivity` and `DBHelper`.

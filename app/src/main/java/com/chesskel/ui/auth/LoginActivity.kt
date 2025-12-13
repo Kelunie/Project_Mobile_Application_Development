@@ -7,12 +7,15 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
 import com.chesskel.R
 import com.chesskel.data.DBHelper
 import com.chesskel.ui.menu.MainMenuActivity
 import com.chesskel.util.Security
 import com.chesskel.ui.theme.ThemeUtils
 import com.chesskel.ui.theme.CenteredActivity
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class LoginActivity : CenteredActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -34,18 +37,63 @@ class LoginActivity : CenteredActivity() {
                 return@setOnClickListener
             }
             val hash = Security.sha256(pass)
-            val sql = "SELECT id FROM usuarios WHERE email=? AND password_hash=? LIMIT 1"
-            db.readableDatabase.rawQuery(sql, arrayOf(email, hash)).use { c ->
-                if (c.moveToFirst()) {
-                    val userId = c.getLong(0)
+
+            // Try remote login first
+            lifecycleScope.launch {
+                val remote = try {
+                    com.chesskel.net.ApiClient.login(email, hash)
+                } catch (e: Exception) {
+                    null
+                }
+
+                if (remote != null) {
+                    // got remote user object
+                    val remoteEmail = remote.optString("email", email)
+                    val remoteName = remote.optString("name", email)
+                    val remoteId = remote.optLong("id", -1)
+
+                    // ensure local user exists: try to find by email
+                    var localId = -1L
+                    val existing = db.getUserById(1) // quick check not useful - instead query by email
+                    // We'll query using SQL
+                    db.readableDatabase.rawQuery("SELECT id FROM usuarios WHERE email=? LIMIT 1", arrayOf(remoteEmail)).use { c ->
+                        if (c.moveToFirst()) localId = c.getLong(0)
+                    }
+                    if (localId <= 0) {
+                        localId = db.insertUser(remoteName, remoteEmail, hash)
+                    }
+
                     getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
-                        .edit().putLong("current_user_id", userId).apply()
-                    // will apears a toeast "login successful" before main menu
-                    Toast.makeText(this, getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
-                    startActivity(Intent(this, MainMenuActivity::class.java))
+                        .edit().putLong("current_user_id", localId).apply()
+                    // Also persist email and name for fallback lookups
+                    getSharedPreferences("chesskel_prefs", MODE_PRIVATE).edit()
+                        .putString("current_user_email", remoteEmail)
+                        .putString("current_user_name", remoteName)
+                        .apply()
+
+                    Toast.makeText(this@LoginActivity, getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
+                    startActivity(Intent(this@LoginActivity, com.chesskel.ui.menu.MainMenuActivity::class.java))
                     finish()
-                } else {
-                    Toast.makeText(this, getString(R.string.invalid_credentials), Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+
+                // Remote login failed or unavailable -> fall back to local DB
+                val sql = "SELECT id FROM usuarios WHERE email=? AND password_hash=? LIMIT 1"
+                db.readableDatabase.rawQuery(sql, arrayOf(email, hash)).use { c ->
+                    if (c.moveToFirst()) {
+                        val userId = c.getLong(0)
+                        getSharedPreferences("chesskel_prefs", MODE_PRIVATE)
+                            .edit().putLong("current_user_id", userId).apply()
+                        // persist email locally as well
+                        getSharedPreferences("chesskel_prefs", MODE_PRIVATE).edit()
+                            .putString("current_user_email", email)
+                            .apply()
+                        Toast.makeText(this@LoginActivity, getString(R.string.login_successful), Toast.LENGTH_SHORT).show()
+                        startActivity(Intent(this@LoginActivity, com.chesskel.ui.menu.MainMenuActivity::class.java))
+                        finish()
+                    } else {
+                        Toast.makeText(this@LoginActivity, getString(R.string.invalid_credentials), Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }

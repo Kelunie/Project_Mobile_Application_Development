@@ -108,6 +108,10 @@
     <string name="profile_permission_denied">Permission denied</string>
     <string name="profile_no_user">No user registered</string>
     <string name="profile_saved">Profile updated</string>
+    <string name="profile_logout">Sign out</string>
+    <string name="profile_synced_remote">Profile synced with server</string>
+    <string name="profile_sync_failed">Could not sync with server</string>
+    <string name="profile_sync_error">Error syncing with server</string>
     <string name="profile_camera_not_available">Camera not available</string>
     <string name="profile_location_no_maps">No maps application found</string>
     <string name="profile_location_button">Location</string>
