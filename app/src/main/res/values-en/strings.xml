@@ -122,6 +122,7 @@
 
     <!-- Learning section (EN) -->
     <string name="profile_image_access_error">The profile picture could not be loaded. Please select it again.</string>
+    <string name="profile_image_save_error">Error to save the profile image</string>
     <string name="learn_to_play">Learn to play</string>
     <string name="learning_video_coming_soon">Coming soon: YouTube video</string>
 

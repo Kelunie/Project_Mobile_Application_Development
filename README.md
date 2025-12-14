@@ -1,212 +1,158 @@
-# ChessKel — Android Chess App
+# ChessKelu — Android Chess App
 
-A lightweight Android chess app with local gameplay (AI), LAN PvP, lessons, and simple user profiles. This README is updated to reflect the current state of the project and its integration with a minimal Express API hosted in Azure.
+## Overview
 
-## Table of contents
-- Project summary
-- What changed (short)
-- App architecture (high level)
-- Azure API (endpoints and behavior)
-- Profile sync behavior (what the app does)
-- Known limitations (images, remote ids)
-- Build & run (Android app)
-- Quick API test commands (PowerShell)
-- How to verify profile sync from the app
-- Troubleshooting & debugging tips
-- Next steps / recommendations
+ChessKelu is an Android chess application developed as part of my coursework. The app supports local gameplay, player versus player (PVP) over a local network, and includes a learning section. It also features a minimal Express API, deployed on Azure, to persist user profiles. This README provides an overview of the project structure, key files, setup instructions, and known issues.
 
 ---
 
-## Project summary
+## Quick Summary
 
-ChessKel is an Android chess application written in Kotlin. It includes:
-- Single-player vs AI (multiple difficulty options)
-- LAN PvP (host / join) using sockets
-- Lessons with video links
-- User profiles stored locally (SQLite) and optionally synced with a remote API
-- Move history using a RecyclerView (MovesAdapter)
-- Light/dark theme and basic styling
-
-This repository contains the Android app. A minimal Express API (separate project) is used to persist user profiles remotely; that API is deployed on Azure and can be used by the app.
-
----
-
-## What changed since the original README
-- The app now integrates with a remote API hosted on Azure for user/profile sync.
-- `ProfileActivity` persists and syncs profile data with the API using an "upsert by email" endpoint (`PATCH /users/by-email/:email/profile`).
-- Image selection from the gallery now uses the system picker (ACTION_OPEN_DOCUMENT) and attempts to persist URI permissions so gallery images don't crash the app on reload.
-- Profile loading now respects the logged-in user (reads `current_user_id` and `current_user_email` from SharedPreferences) so the Profile screen shows the active user's data instead of always showing the first DB row.
-- Donation icon updated to use a visible `$` vector drawable (light/dark aware).
-- The moves list was migrated to RecyclerView to avoid UI issues when the move history grows.
+- **Platform**: Android (Kotlin)
+- **App Package**: `com.chesskel`
+- **Main Features**: 
+  - Single-player chess against an AI
+  - PVP over LAN
+  - Learning lessons
+  - User authentication and profiles
+  - Profile image support
+  - Moves history list
+  - Donation link in the main menu
+- **Supporting API**: Minimal Express API for storing user metadata and profile image URIs (deployed on Azure)
 
 ---
 
-## App architecture (high level)
-- UI: Activities and XML layouts (menu, profile, game, PvP, lessons).
-- Game: `ChessEngine` and related classes perform rules, move generation and validation.
-- Persistence: local SQLite via `DBHelper` (file: `app/src/main/java/com/chesskel/data/DHelper.kt`).
-- Networking (app->server): small HTTP client in `ApiClient.kt` calling the Azure API.
-- PvP: local LAN sockets (see `LanSession` and `PvpGameActivity`).
+## Getting Started
 
-Key Android files:
-- `ProfileActivity.kt` — profile UI and save/sync logic
-- `LoginActivity.kt` / `RegisterActivity.kt` — auth flows (local + remote attempts)
-- `ApiClient.kt` — small HttpURLConnection-based client used to call the Azure API
+### Android App
 
----
+To run the Android app, follow these steps:
 
-## Azure API (deployed endpoint)
-Base URL (example Azure deployment used while developing):
+1. Open the project in Android Studio using the `build.gradle.kts` file located at the repository root.
+2. Build and run the project on an emulator or a physical device with the Android SDK installed.
 
-https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net
+**Note**: The project is configured with Gradle Kotlin DSL (`*.kts`). Use the standard Android run configuration in Android Studio to launch the app.
 
-Endpoints (server behavior):
-- GET /health — health check
-- POST /users — create user
-  - body: `{ "nombre": string, "email": string, "passwordHash": string }`
-  - returns 201 + user shape
-- GET /users/:id — get user by id
-- GET /users/by-email/:email — get user by email
-- PATCH /users/:id/profile — update profile fields for an id
-- PATCH /users/by-email/:email/profile — upsert profile by email: if user exists it updates, otherwise it creates a minimal user and applies the profile fields
-- POST /auth/login — login using email + passwordHash (returns user shape if match)
+### API (Local / Azure)
 
-Server response shape (used by the app):
-```
-{
-  "id": 1,
-  "name": "Nombre",
-  "email": "email@example.com",
-  "profileImageUri": null,
-  "location": "Country / State / City"
-}
-```
+The application is supported by a small Express API. Instructions to run the API locally are as follows:
 
-Notes about the upsert endpoint:
-- The app calls `PATCH /users/by-email/:email/profile` with a JSON body containing `profileImageUri` and `location` (and optionally `nombre` / `passwordHash` for creation).
-- The server will respond with 200 (updated) or 201 (created + profile applied).
+1. Navigate to the API folder (e.g., `d:\apiAzure`) in your terminal.
+2. Run the following commands:
+
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+The API endpoints used by the app include:
+
+- `GET /health`
+- `POST /users` (create user)
+- `POST /auth/login` (login)
+- `PATCH /users/:id/profile` (update profile)
+- `PATCH /users/by-email/:email/profile` (upsert profile by email)
+
+The upsert functionality allows the app to save profile data even if the user does not exist on the server.
 
 ---
 
-## Profile sync behavior (what the app does)
-When the user taps "Save changes" in the Profile screen:
-1. The app saves profileImageUri and location locally in SQLite (via `DBHelper.updateUserProfile`).
-2. The app calls the remote upsert endpoint: `PATCH /users/by-email/{email}/profile`.
-   - If the user exists on the server the server updates the profile and returns 200.
-   - If the user does not exist, the server creates a minimal user and then applies the profile and returns 201.
-3. The app shows a Toast with the result (synced or failed). The local DB always stores the changes regardless of network outcome.
+## Architecture and Design Decisions
 
-Important: the app sends the image as a URI string (for example: `content://...` or a FileProvider URI). The server only stores this string — it does not receive the image binary. See "Known limitations" below.
+The app's architecture is designed to separate concerns and facilitate testing:
 
----
-
-## Known limitations and important notes
-- Image sync: the app currently sends the profile image as a URI string. If the URI is a device-local content:// URI, the server cannot access the binary data or serve it to other clients. To make profile pictures available across devices you need:
-  - an upload endpoint on the server that accepts multi-part file uploads and stores the file in shared storage (e.g. Azure Blob Storage), or
-  - the app to upload the image to a storage service and send the resulting public URL to the server as `profileImageUri`.
-
-- Remote id: the app uses email-based upsert for robustness and does not store the remote numeric id in the local DB. If you want quicker syncs and fewer lookups, consider storing the server id locally (and updating it at registration/login time).
-
-- Concurrency/race: the upsert endpoint handles a race where two clients try to create the same email by catching UNIQUE errors and re-applying the update.
-
-- Permissions: gallery URIs require persisted URI permission (the app now attempts to call `takePersistableUriPermission`). On some pickers this is not available — the app catches that and still shows the selected image for the session.
+- **Game Logic**: Centralized in the `ChessEngine` class, which handles rules, move validation, and board state. This separation allows both the UI and network layers to utilize the same engine.
+- **Network Code**: Isolated in the `net/*` files, including `ApiClient.kt` for HTTP calls to the Express API, and LAN multiplayer code (`LanSession.kt`, `UdpDiscovery.kt`).
+- **UI Structure**: Follows typical Android Activities for different screens (login, register, profile, main menu, game, PVP). A `CenteredActivity` helper is used to center content across activities.
+- **Moves List**: Implemented with a `RecyclerView` via `MovesAdapter` to handle large move lists efficiently and avoid UI unresponsiveness.
+- **Profile Image Handling**: Uses Android content URIs with support for images from the gallery (content provider) and file manager.
+- **Local Persistence**: Managed by a small helper (`DHelper.kt`) for app-specific data storage, with a minimal `User` data class representing user information.
 
 ---
 
-## Build & run (Android app)
-Requirements:
-- Android Studio (recommended) or command-line Gradle
-- JDK 11+
-- Android SDK matching the project's compile/target SDK
+## Important Files
 
-From the project root (Windows / PowerShell):
+### Root-level Files
 
-```powershell
-# Build debug APK
-.\gradlew assembleDebug
+- `build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`: Standard Gradle configuration for the Android project.
+- `README.md`: This README file, explaining the project structure and setup.
 
-# Install debug APK on a connected device or emulator
-.\gradlew installDebug
-```
+### App Module (`app/`)
 
-Open the project in Android Studio for debugging and Logcat output.
+- `app/src/main/java/com/chesskel/game/ChessEngine.kt`: Core chess logic, including board representation, move generation, and turn handling.
+- `app/src/main/java/com/chesskel/game/GameActivity.kt`: Activity for single-player games, connecting the UI with `ChessEngine`.
+- `app/src/main/java/com/chesskel/ui/pvp/PvpGameActivity.kt`: Activity for PVP games over LAN, integrating LAN session code with `ChessEngine`.
+- `app/src/main/java/com/chesskel/ui/game/MovesAdapter.kt`: RecyclerView adapter for rendering the list of moves.
+- `app/src/main/res/layout/item_move.xml`: Layout for a single move's row in the RecyclerView.
+- `app/src/main/java/com/chesskel/ui/auth/LoginActivity.kt`: Login screen, validating input and contacting the API.
+- `app/src/main/java/com/chesskel/ui/auth/RegisterActivity.kt`: Registration screen, creating a local account and posting to the API.
+- `app/src/main/java/com/chesskel/ui/profile/ProfileActivity.kt`: Profile screen for changing display name, location, and profile image.
+- `app/src/main/java/com/chesskel/net/ApiClient.kt`: HTTP client wrapper for API communication (login, user creation, profile update).
+- `app/src/main/java/com/chesskel/net/LanSession.kt` and `app/src/main/java/com/chesskel/net/UdpDiscovery.kt`: LAN multiplayer implementation for discovering peers and managing sessions.
+- `app/src/main/java/com/chesskel/data/DHelper.kt`: Data helper for local persistence (SQLite/SharedPreferences wrapper).
+- `app/src/main/java/com/chesskel/data/User.kt`: User data class mapping to the API user structure.
+- `app/src/main/java/com/chesskel/ui/learn/LessonDetailActivity.kt`: Learning module component for displaying lessons and examples.
+- `app/src/main/java/com/chesskel/ui/theme/CenteredActivity.kt`: Base activity with a layout configured to center content.
 
----
+### Resources (`res/`)
 
-## Quick API test commands (PowerShell)
-Replace `<your-app>` with your actual Azure host if different.
-
-- Health check:
-```powershell
-Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/health" -Method GET
-```
-
-- Create user (example):
-```powershell
-Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users" -Method POST -ContentType "application/json" -Body (@{
-  nombre = "Pepe"
-  email = "test02@example.com"
-  passwordHash = "HASH_FROM_APP"
-} | ConvertTo-Json)
-```
-
-- Upsert profile by email (create or update profile):
-```powershell
-$body = @{
-  profileImageUri = "content://some/uri"
-  location = "Costa Rica / San José / Cantón"
-  nombre = "Pepe"            # optional (used if creating)
-  passwordHash = ""         # optional
-} | ConvertTo-Json
-
-Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users/by-email/test02@example.com/profile" -Method PATCH -ContentType "application/json" -Body $body
-```
-
-- Get user by email (verify profile fields):
-```powershell
-Invoke-RestMethod -Uri "https://chesskelu-g4dsgafjefe6fugv.canadacentral-01.azurewebsites.net/users/by-email/test02@example.com" -Method GET
-```
+- `res/layout/*.xml`: Layout files for each Activity, using consistent styles and primary button background drawables.
+- `res/drawable/bg_btn_primary_*.xml`: Button drawables for different states (normal, pressed, disabled).
+- `res/values/strings.xml` and `res/values-en/strings.xml`: String resources, containing both English and default Spanish strings.
 
 ---
 
-## How to verify profile sync from the app
-1. Create a user in the app (Register) or login.
-2. Open Profile, choose an image from the gallery and set a location.
-3. Tap "Save changes": the app will show a Toast saying it saved locally and another Toast for the remote sync result.
-4. Use the GET /users/by-email/:email endpoint (PowerShell example above) to confirm `profileImageUri` and `location` changed on the server.
+## API Server Files
 
-If the GET shows the new location and the `profileImageUri` string you sent, the upsert worked. Remember the `profileImageUri` is a reference string — the server does not host the image itself unless you implement file upload.
+The Express API, crucial for persisting user profile data, is minimal and straightforward. The main server file is `server.js`.
 
----
+Key API functions include:
 
-## Troubleshooting & debugging tips
-- If Profile shows the wrong user after registering a new account, confirm that `current_user_id` and `current_user_email` were written to SharedPreferences. You can add temporary `Log.d` statements in `ProfileActivity.loadUser()` to inspect values.
-- If the app crashes when opening the saved gallery image after restart, confirm the picker grants persistable URI permission; otherwise reselect the image and the app will store a usable URI for the session.
-- For PvP issues: compare logs on both devices and inspect the payload format and acknowledgements. The app includes `PvpGameActivity` and `LanSession` for reference.
+- **Create User** (`POST /users`): Registers users in the JSON store, allowing persistent IDs.
+- **Login** (`POST /auth/login`): Checks stored `passwordHash` for user authentication.
+- **Get by Email / ID**: Lookup endpoints used by the app.
+- **Upsert Profile by Email** (`PATCH /users/by-email/:email/profile`): Saves profile updates, creating the user if they do not exist.
+
+**Note**: JSON file storage was chosen for its simplicity and ease of deployment to Azure. A real-world application would require a database and proper authentication mechanisms.
 
 ---
 
-## Next steps / recommendations
-- Implement an image upload endpoint in the API and make the app upload profile pictures (store and send a public URL).
-- Persist the remote user id locally to speed up syncs and reduce lookups.
-- Add UI indicators while syncing (progress spinner) and retry logic for failed syncs.
-- Add unit tests for `ChessEngine` and integration tests for profile sync.
+## Design Choices and Trade-offs
+
+As a student project, several design choices were made for simplicity and educational purposes:
+
+- **Single Engine File**: Simplifies the project structure but may not scale well for larger projects.
+- **Minimal Authentication**: Suitable for demo purposes but not secure for production use.
+- **Gallery vs. File Picker**: Content URI handling was added to support profile image selection from the gallery, addressing Android's return of content URIs.
+- **RecyclerView for Moves**: Prevents performance issues and UI freezes with long move lists.
+- **Centered Layout Base**: The `CenteredActivity` class ensures consistent and easy centering of all screens.
 
 ---
 
-## Contributing
-1. Fork the repo and create a branch with `feature/` or `fix/` prefix.
-2. Run and test locally before opening a PR.
-3. Describe changes clearly and how to reproduce.
+## Known Issues and TODOs
+
+- **PVP Synchronization**: The first move is not always reflected on the other device. Review the `LanSession` send/receive acknowledgments and retry logic.
+- **Profile Image Crash**: If the saved profile image URI points to a removed file path, the profile load may crash. Implement robust content URI handling and try/catch around image loading.
+- **Improve Authentication**: Replace plain `passwordHash` comparison with JWT-based authentication and secure password storage.
+- **Automated Tests**: Add unit tests for `ChessEngine` and integration tests for the API client.
 
 ---
 
-## License
-See `LICENSE.txt` in the project root.
+## Grading Criteria (For Instructor)
+
+The app can be evaluated based on the following criteria:
+
+- **Functionality**: Does the app run? Can users play single-player and PVP? Are moves processed correctly and persisted?
+- **Code Structure**: Is the game logic separated from the UI and network code? Clear package organization and single-responsibility principles should be evident.
+- **Network & API Usage**: Does the profile save/load functionality work with the provided API?
+- **UX & Polish**: Are screens properly centered? Is there a consistent button style? Does profile image selection work from the gallery? Is RecyclerView used for moves?
 
 ---
 
-If you want, I can also:
-- Add screenshots to the README,
-- Add an example of how to implement an image upload endpoint (server + client example), or
-- Add small tests validating the profile loading logic in `ProfileActivity` and `DBHelper`.
+## Contact / Credits
+
+This project was developed as coursework. For any clarifications or focus on specific parts (e.g., PVP sync, profile image fixes, README language polish), please reach out.
+
+**License**: MIT (see LICENSE.txt)
+
+---
